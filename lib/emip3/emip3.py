@@ -3,7 +3,7 @@
 
 import hashlib
 import binascii
-from Crypto.Cipher import ChaCha20_Poly1305
+from Cryptodome.Cipher import AES, ChaCha20_Poly1305
 
 def encryptWithPassword (password, saltHex, nonceHex, data):
     salt = binascii.unhexlify(saltHex)

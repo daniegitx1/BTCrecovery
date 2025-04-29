@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Seed Recovery Result</title>
+    <title>Seed Descramble Result</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -39,9 +39,7 @@
                         <hr>
                         <p class="mt-4 mb-2 fw-bold">Matched Derivation Path:</p>
                         <div class="bg-white p-3 rounded border shadow-sm">
-                            <p class="text-muted mb-0">
-                                {{ parsed_report.Matched_Derivation_Path }}
-                            </p>
+                            <p class="text-muted mb-0">{{ parsed_report.Matched_Derivation_Path }}</p>
                         </div>
                     {% endif %}
                 </div>
@@ -50,17 +48,29 @@
                 <div class="card p-4 my-5">
                     <h3 class="mb-4 text-center">Recovery Report</h3>
                     <ul class="list-group">
-                        {% for key, value in parsed_report.items %}
-                            {% if key != "Full Log" and key != "Full Command" and key != "Recovered Seed" and key != "Matched Derivation Path" %}
-                                <li class="list-group-item">
-                                    <strong>{{ key }}:</strong> {{ value }}
-                                </li>
-                            {% endif %}
-                        {% endfor %}
+                        <li class="list-group-item"><strong>Recovery Date:</strong> {{ parsed_report.End_Time|date:"d-m-Y" }}</li>
+                        <li class="list-group-item"><strong>Total Recovery Time:</strong> {{ parsed_report.Total_Time }}</li>
+                        <li class="list-group-item"><strong>Toolset:</strong> {{ parsed_report.Toolset }}</li>
+                        <li class="list-group-item"><strong>Software Version:</strong> {{ parsed_report.Software_Version }}</li>
+                        <li class="list-group-item"><strong>Command Full:</strong> {{ parsed_report.Full_Command }}</li>
+
+                        {% if parsed_report.Command_Arguments %}
+                        <li class="list-group-item">
+                            <strong>Command Arguments:</strong>
+                            <pre class="bg-light p-2 border rounded">{{ parsed_report.Command_Arguments }}</pre>
+                        </li>
+                        {% endif %}
+
+                        {% if parsed_report.Recovery_Log %}
+                        <li class="list-group-item">
+                            <strong>Recovery Log:</strong>
+                            <pre class="bg-dark text-white p-3 rounded" style="white-space: pre-wrap; font-size: 0.9rem;">{{ parsed_report.Recovery_Log }}</pre>
+                        </li>
+                        {% endif %}
                     </ul>
 
                     <div class="mt-4 text-center">
-                        <a href="{% url 'download_recovery_report' %}" class="btn btn-success">Download Full Log</a>
+                        <a href="{% url 'download_descramble_log' %}" class="btn btn-success">Download Full Log</a>
                         <button onclick="window.print();" class="btn btn-primary ms-3">Print Report</button>
                     </div>
                 </div>
@@ -77,12 +87,11 @@
             {% endif %}
 
             <div class="text-center mt-5">
-                <a href="{% url 'seed_descramble_input' %}" class="btn btn-primary btn-lg">🔄 Start New Recovery</a>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg">⬅ Back to Dashboard</a>
             </div>
 
         </div>
     </div>
 </div>
-
 </body>
 </html>

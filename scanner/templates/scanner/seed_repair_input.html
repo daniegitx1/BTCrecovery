@@ -8,10 +8,10 @@
     <style>
         body { background-color: #f1f3f5; }
         .form-section {
-            background-color: #f8f9fa;
+            background-color: #ffffff;
             padding: 1.5rem;
             border-radius: 0.5rem;
-            box-shadow: 0 0 5px rgba(0,0,0,0.05);
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
         }
         .form-title {
@@ -20,48 +20,35 @@
             justify-content: center;
             margin-bottom: 2rem;
         }
-        .form-title img {
-            height: 60px;
-            margin-right: 15px;
+        .form-title img { height: 60px; margin-right: 15px; }
+        .form-title-text { font-size: 1.8rem; font-weight: bold; }
+        .blinking-dot {
+            height: 12px; width: 12px; background-color: red;
+            border-radius: 50%; display: inline-block;
+            margin-left: 10px; animation: blink 1s infinite; visibility: hidden;
         }
-        .form-title-text {
-            font-size: 1.8rem;
-            font-weight: 600;
-        }
-        .form-control { background-color: #ffffff; }
+        @keyframes blink { 50% { opacity: 0; } }
         #liveOutput {
-            background-color: #000;
-            color: #00ff00;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            height: 400px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            scroll-behavior: smooth;
+            background-color: #000; color: #00FF00;
+            padding: 1rem; border-radius: 0.5rem;
+            height: 400px; overflow-y: auto;
+            font-family: monospace; font-size: 0.9rem;
+            white-space: pre-wrap; scroll-behavior: smooth;
         }
-        @keyframes blink {
-            to { visibility: hidden; }
-        }
-        .equal-width-btn {
-            width: 200px;
-        }
+        .full-width { max-width: 100%; }
         .button-row {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 2rem;
+            display: flex; justify-content: center;
+            gap: 20px; margin-top: 2rem;
         }
+        .equal-width-btn { width: 200px; }
     </style>
 </head>
-
 <body>
-
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
 
+            <!-- Title -->
             <div class="form-title">
                 <img src="https://danie.capetown/wp-content/uploads/2025/04/ddlogo2_medium.png" alt="Logo">
                 <div class="form-title-text">Digital Distillery Seed Repair</div>
@@ -71,121 +58,234 @@
                 <div class="alert alert-danger text-center fs-5">{{ error }}</div>
             {% endif %}
 
-            <form id="repairForm" method="post" action="{% url 'seed_repair_result' %}" enctype="multipart/form-data">
+            <!-- Form -->
+            <form id="repairForm" method="post" action="{% url 'seed_repair_result' %}">
                 {% csrf_token %}
+                <input type="hidden" id="fixed_args" value="--no-dupchecks --no-eta --dsw">
 
+                <!-- Command String -->
                 <div class="form-section">
-                    <h4>Seed Phrase</h4>
+                    <div class="mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="modeToggle" id="pasteMode" value="paste">
+                            <label class="form-check-label" for="pasteMode">Paste string</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="modeToggle" id="buildMode" value="build" checked>
+                            <label class="form-check-label" for="buildMode">Build string</label>
+                        </div>
+                    </div>
+
+                    <h5>Command String</h5>
+                    <textarea id="constructedString" name="constructed_string" class="form-control full-width" rows="3" placeholder="Paste or build command here..."></textarea>
+                </div>
+
+                <!-- Seed Words -->
+                <div class="form-section">
+                    <h5>Seed Words <span style="color: red;">*</span></h5>
+
+                    <label class="form-label">Paste Seed Words (Option 1):</label>
                     {{ form.seed_phrase }}
+
+                    <hr>
+
+                    <label class="form-label">Use Word List File (Option 2):</label>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <input type="text" name="wordlist_file" class="form-control full-width" placeholder="a file containing your words" readonly>
+                        <input type="file" id="filePicker" accept=".txt" style="display: none;" onchange="handleFileSelect(this)">
+                        <button type="button" class="btn btn-sm btn-secondary text-white" onclick="document.getElementById('filePicker').click()">Choose File</button>
+                        <button type="button" class="btn btn-sm btn-danger text-white" onclick="clearFile()">Clear</button>
+                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="reviewListFile()">Review List File</button>
+                    </div>
                 </div>
 
+                <!-- Wallet Info -->
+                <div class="form-section"><h5>Wallet Type <span style="color: red;">*</span></h5>{{ form.wallet_type }}</div>
+                <div class="form-section"><h5>Addresses <span style="color: red;">*</span></h5>{{ form.addresses }}</div>
+                <div class="form-section"><h5>Address Limit <span style="color: red;">*</span></h5>{{ form.address_limit }}</div>
+                <div class="form-section"><h5>Language <span style="color: red;">*</span></h5>{{ form.language }}</div>
+                <div class="form-section"><h5>Mnemonic Length <span style="color: red;">*</span></h5>{{ form.mnemonic_length }}</div>
+
+                <!-- Derivation Paths -->
                 <div class="form-section">
-                    <h4>Command String (Optional)</h4>
-                    {{ form.constructed_string }}
-                    <small class="text-muted">Leave empty if filling above fields.</small>
+                    <h5 style="color: grey;">Derivation Paths (optional)</h5>
+
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <input type="text" name="derivation_file" class="form-control full-width" placeholder="a derivation path file (e.g., paths.txt)" readonly>
+                        <input type="file" id="derivationFilePicker" accept=".txt" style="display: none;" onchange="handleDerivationFileSelect(this)">
+                        <button type="button" class="btn btn-sm btn-secondary text-white" onclick="document.getElementById('derivationFilePicker').click()">Choose File</button>
+                        <button type="button" class="btn btn-sm btn-danger text-white" onclick="clearDerivationFile()">Clear</button>
+                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="reviewDerivationFile()">Review Derivation File</button>
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <label for="manualDerivation" class="form-label">Manual Derivation Path (overrides file)</label>
+                        <input type="text" name="manual_derivation" id="manualDerivation" class="form-control full-width" placeholder="e.g., m/84'/0'/0'/0/0">
+                    </div>
                 </div>
 
-                <div class="button-row">
-                    <button type="button" class="btn btn-primary btn-lg equal-width-btn" onclick="startRecovery()">
-                        Start Seed Repair
-                    </button>
-
-                    <button type="button" id="stopButton" class="btn btn-danger btn-lg equal-width-btn" onclick="stopRecovery()" disabled>
-                        Stop Recovery
-                    </button>
+                <!-- Recovery Buttons -->
+                <div class="form-section text-center">
+                    <button type="button" class="btn btn-primary btn-lg equal-width-btn me-3" onclick="startRecovery()">Start Recovery</button>
+                    <button type="button" id="stopButton" class="btn btn-danger btn-lg equal-width-btn" onclick="stopRecovery()" disabled>Stop Recovery</button>
                 </div>
-
             </form>
 
+            <!-- Live Output Console -->
             <hr class="my-5">
-
             <div class="form-section">
-                <h4>Live Output</h4>
+                <h5>Live Output <span class="blinking-dot" id="liveIndicator"></span></h5>
                 <pre id="liveOutput">Waiting to start...</pre>
+                <div class="my-2">
+                    <small id="running-time" class="text-muted">Running time: 0 sec</small>
+                </div>
             </div>
 
         </div>
     </div>
 </div>
+</body>
 
-<audio id="successSound" src="{% static 'sounds/success.wav' %}"></audio>
-
-<!-- JavaScript -->
 <script>
-let recoveryTimer = null;
-let dotsTimer = null;
-let statusTimer = null;
-let dots = '';
+/* ─────────────────────────────────────────────────────
+   🔁 Global Timers
+───────────────────────────────────────────────────── */
+let recoveryTimer;
+let statusTimer;
+let recoveryStartTime;
 
-function startRecovery() {
-    const constructedArgs = document.getElementById('id_constructed_string').value.trim();
-    if (!constructedArgs) {
-        alert("Please paste or build a command string first.");
-        return;
+/* ─────────────────────────────────────────────────────
+   🧠 Command String Builder
+───────────────────────────────────────────────────── */
+function updateConstructedString() {
+    const mode = document.querySelector('[name="modeToggle"]:checked')?.value;
+    if (mode !== 'build') return;  // Only auto-generate if "Build string" selected
+
+    const args = [];
+    const fixed = document.getElementById('fixed_args')?.value.trim();
+    if (fixed) args.push(fixed);
+
+    const seed = document.querySelector('[name="seed_phrase"]')?.value.trim();
+    const wallet = document.querySelector('[name="wallet_type"]')?.value;
+    const addrs = document.querySelector('[name="addresses"]')?.value.trim();
+    const limit = document.querySelector('[name="address_limit"]')?.value.trim();
+    const wordlist = document.querySelector('[name="wordlist_file"]')?.value.trim();
+    const lang = document.querySelector('[name="language"]')?.value;
+    const length = document.querySelector('[name="mnemonic_length"]')?.value.trim();
+    const derivFile = document.querySelector('[name="derivation_file"]')?.value.trim();
+    const manualDerivation = document.querySelector('[name="manual_derivation"]')?.value.trim();
+
+    if (seed) {
+        args.push(`--mnemonic ${quoteIfNeeded(seed)}`);
+    } else if (wordlist) {
+        args.push(`--tokenlist ${quoteIfNeeded(wordlist)}`);
     }
 
-    fetch(`/repair/start-recovery/?args=${encodeURIComponent(constructedArgs)}`)
+    if (wallet) args.push(`--wallet-type ${wallet}`);
+    if (addrs) args.push(`--addrs ${addrs}`);
+    if (limit) args.push(`--addr-limit ${limit}`);
+    if (lang) args.push(`--language ${lang}`);
+    if (length) args.push(`--mnemonic-length ${length}`);
+
+    if (manualDerivation) {
+        args.push(`--bip32-path ${quoteIfNeeded(manualDerivation)}`);
+    } else if (derivFile) {
+        args.push(`--pathlist ${quoteIfNeeded(derivFile)}`);
+    }
+
+    document.getElementById('constructedString').value = args.join(' ');
+}
+
+function quoteIfNeeded(str) {
+    str = str.trim();
+    return (str.includes(' ') && !(str.startsWith('"') && str.endsWith('"')))
+        ? `"${str}"`
+        : str;
+}
+
+/* ─────────────────────────────────────────────────────
+   🚀 Recovery Start/Stop
+───────────────────────────────────────────────────── */
+function startRecovery() {
+    const args = document.getElementById('constructedString').value.trim();
+    const mode = document.querySelector('[name="modeToggle"]:checked')?.value;
+
+    // Only validate if mode is "build"
+    if (mode === 'build') {
+        const seed = document.querySelector('[name="seed_phrase"]').value.trim();
+        const wordlist = document.querySelector('[name="wordlist_file"]').value.trim();
+        const wallet = document.querySelector('[name="wallet_type"]').value;
+        const addrs = document.querySelector('[name="addresses"]').value.trim();
+
+        if (!args) {
+            alert("❗ Please build the command string.");
+            return;
+        }
+
+        if (!seed && !wordlist) {
+            alert("❗ You must provide either seed words or a wordlist file.");
+            return;
+        }
+
+        if (!wallet) {
+            alert("❗ Please select a wallet type.");
+            return;
+        }
+
+        if (!addrs) {
+            alert("❗ Please enter one or more known addresses.");
+            return;
+        }
+    }
+
+    // Proceed regardless of mode
+    fetch(`/repair/start-recovery/?args=${encodeURIComponent(args)}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                startFakeConsole();
                 document.getElementById('stopButton').disabled = false;
+                document.getElementById('liveIndicator').style.visibility = 'visible';
+                startFakeConsole();
                 startCheckingStatus();
+                recoveryStartTime = new Date();
+                statusTimer = setInterval(updateRunningTime, 1000);
             } else {
-                alert("Failed to start recovery: " + data.error);
+                alert("❌ Failed to start recovery: " + data.error);
             }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Something went wrong.");
         });
 }
+
 
 function stopRecovery() {
     fetch("/repair/stop-recovery/")
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                stopFakeConsole();
-                stopCheckingStatus();
-                document.getElementById('stopButton').disabled = true;
-            } else {
-                alert("Failed to stop recovery: " + data.error);
-            }
+        .then(() => {
+            clearInterval(recoveryTimer);
+            clearInterval(statusTimer);
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('liveIndicator').style.visibility = 'hidden';
         });
 }
 
+/* ─────────────────────────────────────────────────────
+   📺 Recovery Progress
+───────────────────────────────────────────────────── */
 function startFakeConsole() {
     const output = document.getElementById('liveOutput');
-    output.textContent = '';
-
-    function appendPulse() {
-        const now = new Date();
-        const timestamp = now.toLocaleTimeString([], {hour12: false});
-        output.textContent += `\n[${timestamp}] Recovery in progress...`;
+    output.textContent = 'Recovery started...\n';
+    recoveryTimer = setInterval(() => {
+        const timestamp = new Date().toLocaleTimeString([], { hour12: false });
+        output.textContent += `[${timestamp}] Recovery in progress...\n`;
         output.scrollTop = output.scrollHeight;
-    }
-
-    function animateDots() {
-        dots += '.';
-        if (dots.length > 3) dots = '.';
-        output.textContent = output.textContent.replace(/(\.\.\.)?$/, dots);
-        output.scrollTop = output.scrollHeight;
-    }
-
-    appendPulse();
-    recoveryTimer = setInterval(appendPulse, 5 * 60 * 1000);
-    dotsTimer = setInterval(animateDots, 500);
+    }, 300000); // every 5 minutes
 }
 
-function stopFakeConsole(finalMessage = "⛔ Recovery stopped.") {
-    clearInterval(recoveryTimer);
-    clearInterval(dotsTimer);
-    const output = document.getElementById('liveOutput');
+function updateRunningTime() {
     const now = new Date();
-    const timestamp = now.toLocaleTimeString([], {hour12: false});
-    output.textContent += `\n[${timestamp}] ${finalMessage}`;
-    output.scrollTop = output.scrollHeight;
+    const elapsed = now - recoveryStartTime;
+    const min = Math.floor(elapsed / 60000);
+    const sec = Math.floor((elapsed % 60000) / 1000);
+    document.getElementById('running-time').textContent =
+        `Running time: ${min > 0 ? min + ' min ' : ''}${sec} sec`;
 }
 
 function startCheckingStatus() {
@@ -194,26 +294,74 @@ function startCheckingStatus() {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'finished') {
+                    clearInterval(recoveryTimer);
                     clearInterval(statusTimer);
-                    stopFakeConsole("✅ Recovery complete!");
-
-                    // ✅ Play sound
-                    const sound = document.getElementById('successSound');
-                    sound.play();
-
+                    document.getElementById('liveIndicator').style.visibility = 'hidden';
                     setTimeout(() => {
-                        window.location.href = "{% url 'seed_repair_result' %}";
-                    }, 2500);
+                        window.location.href = "/repair/result/";
+                    }, 2000);
                 }
-            })
-            .catch(console.error);
+            });
     }, 3000);
 }
 
-function stopCheckingStatus() {
-    clearInterval(statusTimer);
+/* ─────────────────────────────────────────────────────
+   📂 File Handlers
+───────────────────────────────────────────────────── */
+function handleFileSelect(input) {
+    const filename = input.value.split("\\").pop();
+    document.querySelector('[name="wordlist_file"]').value = filename;
+    updateConstructedString();
 }
+
+function clearFile() {
+    document.querySelector('[name="wordlist_file"]').value = '';
+    document.getElementById('filePicker').value = '';
+    updateConstructedString();
+}
+
+function reviewListFile() {
+    const filename = document.querySelector('[name="wordlist_file"]').value.trim().split("\\").pop();
+    if (filename) fetch(`/repair/open-list-file/${filename}/`);
+    else alert("Please select a wordlist file first.");
+}
+
+function handleDerivationFileSelect(input) {
+    const filename = input.value.split("\\").pop();
+    document.querySelector('[name="derivation_file"]').value = filename;
+    updateConstructedString();
+}
+
+function clearDerivationFile() {
+    document.querySelector('[name="derivation_file"]').value = '';
+    document.getElementById('derivationFilePicker').value = '';
+    updateConstructedString();
+}
+
+function reviewDerivationFile() {
+    const filename = document.querySelector('[name="derivation_file"]').value.trim().split("\\").pop();
+    if (filename) fetch(`/repair/open-derivation-file/${filename}/`);
+    else alert("Please select a derivation file first.");
+}
+
+/* ─────────────────────────────────────────────────────
+   🔁 Init Event Listeners
+───────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+    // Live update if in "Build" mode
+    document.querySelectorAll('input, select, textarea').forEach(el =>
+        el.addEventListener('input', updateConstructedString)
+    );
+
+    // Mode toggle change handler
+    document.querySelectorAll('[name="modeToggle"]').forEach(el =>
+        el.addEventListener('change', updateConstructedString)
+    );
+
+    updateConstructedString();  // Initial build on page load
+});
 </script>
+
 
 </body>
 </html>

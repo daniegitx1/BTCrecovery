@@ -1,4 +1,4 @@
-from Crypto.Cipher import AES
+from Cryptodome.Cipher import AES, ChaCha20_Poly1305
 import base64
 from lib.cashaddress import base58
 #import requests

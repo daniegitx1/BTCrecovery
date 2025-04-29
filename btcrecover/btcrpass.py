@@ -58,7 +58,9 @@ except:
     from lib.embit.py_ripemd160 import ripemd160
 
 # Import modules from requirements.txt
-from Crypto.Cipher import AES
+from Cryptodome.Cipher import AES, ChaCha20_Poly1305
+from Cryptodome.Cipher import AES as KAES
+from Cryptodome.Hash import RIPEMD160
 
 # Import optional modules
 module_opencl_available = False
@@ -4533,7 +4535,7 @@ class WalletYoroi(object):
     # This is the time-consuming function executed by worker thread(s). It returns a tuple: if a password
     # is correct return it, else return False for item 0; return a count of passwords checked for item 1
     def _return_verified_password_or_false_opencl(self, arg_passwords): # Yoroi Cadano Wallet
-        from Crypto.Cipher import ChaCha20_Poly1305
+        from Cryptodome.Cipher import AES, ChaCha20_Poly1305
 
         # Convert Unicode strings (lazily) to UTF-8 bytestrings
         passwords = map(lambda p: p.encode("utf_8", "ignore"), arg_passwords)

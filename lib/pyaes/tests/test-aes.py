@@ -37,8 +37,11 @@ else:
     pass
 
 # compare against a known working implementation
-from Crypto.Cipher import AES as KAES
-from Crypto.Util import Counter as KCounter
+from Cryptodome.Cipher import AES, ChaCha20_Poly1305
+from Cryptodome.Cipher import AES as KAES
+from Cryptodome.Hash import RIPEMD160
+from Cryptodome.Cipher import AES
+Util import Counter as KCounter
 for mode in [ 'CBC', 'CTR',  'CFB', 'ECB', 'OFB' ]:
 
     (tt_ksetup, tt_kencrypt, tt_kdecrypt) = (0.0, 0.0, 0.0)

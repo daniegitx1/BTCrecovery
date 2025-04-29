@@ -6,72 +6,82 @@
     <title>Recovery Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
 <div class="container py-5">
-    <h1 class="text-center mb-5">Digital Distillery Recovery Dashboard</h1>
+    <h1 class="text-center mb-5">🔐 Digital Distillery Recovery Dashboard</h1>
+    <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
 
-    <div class="row row-cols-1 row-cols-md-2 g-4">
+        <!-- ✅ Seed Repair -->
         <div class="col">
             <a href="{% url 'seed_repair_input' %}" class="text-decoration-none">
                 <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Seed Repair</h5>
-                        <p class="card-text text-muted">Recover a valid seed from a broken mnemonic phrase.</p>
+                    <div class="card-body text-center">
+                        <h5 class="card-title">🛠 Seed Repair</h5>
+                        <p class="card-text text-muted">Fix typos or missing words in mnemonic phrases.</p>
                     </div>
                 </div>
             </a>
         </div>
+
+        <!-- ✅ Seed Descramble -->
         <div class="col">
             <a href="{% url 'seed_descramble_input' %}" class="text-decoration-none">
                 <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Seed Descramble</h5>
-                        <p class="card-text text-muted">Descramble wordlist into possible valid mnemonic seeds.</p>
+                    <div class="card-body text-center">
+                        <h5 class="card-title">🧩 Seed Descramble</h5>
+                        <p class="card-text text-muted">Descramble wordlist into valid mnemonic seeds.</p>
                     </div>
                 </div>
             </a>
         </div>
+
+        <!-- 🚧 Paper Wallet -->
         <div class="col">
-            <a href="{% url 'paperwallet_input' %}" class="text-decoration-none">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Paper Wallet</h5>
-                        <p class="card-text text-muted">Recover from encrypted BIP38 paper wallet keys.</p>
-                    </div>
+            <div class="card shadow-sm h-100 border-secondary bg-light">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">📄 Paper Wallet</h5>
+                    <p class="card-text text-muted">Recover from BIP38 encrypted paper wallets.</p>
+                    <span class="badge bg-secondary mt-2">Coming Soon</span>
                 </div>
-            </a>
+            </div>
         </div>
+
+        <!-- 🚧 Passphrase Finder -->
         <div class="col">
-            <a href="{% url 'passphrase_input' %}" class="text-decoration-none">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Passphrase Finder</h5>
-                        <p class="card-text text-muted">Find the missing passphrase used with a known mnemonic.</p>
-                    </div>
+            <div class="card shadow-sm h-100 border-secondary bg-light">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">🔑 Passphrase Finder</h5>
+                    <p class="card-text text-muted">Recover passphrases used with mnemonic phrases.</p>
+                    <span class="badge bg-secondary mt-2">Coming Soon</span>
                 </div>
-            </a>
+            </div>
         </div>
+
+        <!-- 🚧 Password Finder -->
         <div class="col">
-            <a href="{% url 'password_input' %}" class="text-decoration-none">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Password Finder</h5>
-                        <p class="card-text text-muted">Find the correct password for an encrypted wallet file.</p>
-                    </div>
+            <div class="card shadow-sm h-100 border-secondary bg-light">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">🔐 Password Finder</h5>
+                    <p class="card-text text-muted">Crack lost passwords for encrypted wallet files.</p>
+                    <span class="badge bg-secondary mt-2">Coming Soon</span>
                 </div>
-            </a>
+            </div>
         </div>
+
+        <!-- 🚧 Private Key Repair -->
         <div class="col">
-            <a href="{% url 'privkey_input' %}" class="text-decoration-none">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Private Key Repair</h5>
-                        <p class="card-text text-muted">Recover valid private keys from corrupted key data.</p>
-                    </div>
+            <div class="card shadow-sm h-100 border-secondary bg-light">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">🧬 Private Key Repair</h5>
+                    <p class="card-text text-muted">Recover usable keys from corrupted or partial private keys.</p>
+                    <span class="badge bg-secondary mt-2">Coming Soon</span>
                 </div>
-            </a>
+            </div>
         </div>
+
     </div>
 </div>
 </body>
 </html>
+

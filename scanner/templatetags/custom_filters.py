@@ -18,3 +18,13 @@ def index(seq, i):
 @register.filter
 def make_list(value):
     return range(int(value))
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key, "")
+
+@register.filter
+def replace(value, arg):
+    old, new = arg.split(',')
+    return value.replace(old, new)
+

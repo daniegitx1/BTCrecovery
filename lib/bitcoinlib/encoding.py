@@ -31,12 +31,15 @@ SCRYPT_ERROR = None
 USING_MODULE_SCRYPT = os.getenv("USING_MODULE_SCRYPT") not in ["false", "False", "0", "FALSE"]
 
 try:
-    from Crypto.Hash import RIPEMD160
+    from Cryptodome.Cipher import AES
+    from Cryptodome.Hash import RIPEMD160
 except ImportError as err:
-    _logger.warning("Could not import RIPEMD160 from cryptodome, will try do use hashlib but this could lead to errors")
+    _logger.warning("Could not import RIPEMD160 from Cryptodome, will try to use hashlib but this could lead to errors")
 
 try:
-    from Crypto.Cipher import AES
+    from Cryptodome.Cipher import AES, ChaCha20_Poly1305
+    from Cryptodome.Cipher import AES as KAES
+    from Cryptodome.Hash import RIPEMD160
 except ImportError as PYAES_ERROR:
     _logger.warning("MISSING MODULES! Please install pycryptodome")
     _logger.warning("The bip38_decrypt and bip38_encrypt methods need the pycryptodome library to work!")
@@ -47,7 +50,8 @@ except ImportError as PYAES_ERROR:
 #         USING_MODULE_SCRYPT = True
 # except ImportError as SCRYPT_ERROR:
 #     try:
-#         from Crypto.Protocol.KDF import scrypt
+#         from Cryptodome.
+#Protocol.KDF import scrypt
 #         _logger.info("Using scrypt method from pycryptodome")
 #     except ImportError as err:
 #         _logger.info("Could not import scrypt from pycryptodome: %s" % str(err))

@@ -158,24 +158,20 @@
 </div>
 
 <script>
-let recoveryTimer, statusTimer;
-let recoveryStartTime;
-
-function reviewListFile() {
-    const fileInput = document.querySelector('[name="tokenlist_file"]');
-    const filename = fileInput.value.split("\\").pop();
-    if (filename) {
-        fetch(`/open-list-file/${filename}/`);
-    } else {
-        alert('Please select a list file first!');
-    }
+// ───────────────────────────────────────────────
+// 🛠️ Utility Functions
+// ───────────────────────────────────────────────
+function quoteIfNeeded(str) {
+    str = str.trim();
+    return (str.includes(' ') && !(str.startsWith('"') && str.endsWith('"')))
+        ? `"${str}"`
+        : str;
 }
 
-function reviewDerivationFile() {
-    const selected = document.getElementById('derivationDropdown').value;
-    fetch(`/open-derivation-file/${selected}/`);
-}
 
+// ───────────────────────────────────────────────
+// 🧠 Command String Builder
+// ───────────────────────────────────────────────
 function updateConstructedString() {
     const walletType = document.querySelector('[name="wallet_type"]').value.trim();
     const addresses = document.querySelector('[name="addresses"]').value.trim();
@@ -191,25 +187,42 @@ function updateConstructedString() {
     if (addressLimit) parts.push(`--addr-limit ${addressLimit}`);
     if (mnemonicLength) parts.push(`--mnemonic-length ${mnemonicLength}`);
     if (language) parts.push(`--language ${language}`);
-    if (customPath) parts.push(`--bip32-path "${customPath}"`);
-    if (tokenlistFile) parts.push(`--tokenlist ./btcrecover/dd-lists/${tokenlistFile}`);
+    if (customPath) parts.push(`--bip32-path ${quoteIfNeeded(customPath)}`);
+    if (tokenlistFile) parts.push(`--tokenlist ${quoteIfNeeded('./btcrecover/dd-lists/' + tokenlistFile)}`);
 
-    document.getElementById('constructedString').value = parts.join(' ');
+    // ✅ MUST BE INSIDE the function
+    const cmd = parts.join(' ');
+    document.getElementById('constructedString').value = cmd;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('input, select').forEach(el => {
-        el.addEventListener('input', updateConstructedString);
-    });
-    updateConstructedString();
-});
+// ───────────────────────────────────────────────
+// 📁 File Review Handlers
+// ───────────────────────────────────────────────
+function reviewListFile() {
+    const fileInput = document.querySelector('[name="tokenlist_file"]');
+    const filename = fileInput.value.split("\\").pop();
+    if (filename) {
+        fetch(`/open-list-file/${filename}/`);
+    } else {
+        alert("Please select a list file first.");
+    }
+}
 
+function reviewDerivationFile() {
+    const selected = document.getElementById('derivationDropdown').value;
+    fetch(`/open-derivation-file/${selected}/`);
+}
+
+// ───────────────────────────────────────────────
+// 🚀 Recovery Start / Stop
+// ───────────────────────────────────────────────
 function startRecovery() {
     const args = document.getElementById('constructedString').value.trim();
     if (!args) {
         alert("Paste or build the command first.");
         return;
     }
+
     fetch(`/descramble/start-recovery/?args=${encodeURIComponent(args)}`)
         .then(res => res.json())
         .then(data => {
@@ -228,8 +241,7 @@ function startRecovery() {
 
 function stopRecovery() {
     fetch("/descramble/stop-recovery/")
-        .then(res => res.json())
-        .then(data => {
+        .then(() => {
             clearInterval(recoveryTimer);
             clearInterval(statusTimer);
             document.getElementById('stopButton').disabled = true;
@@ -237,29 +249,36 @@ function stopRecovery() {
         });
 }
 
+// ───────────────────────────────────────────────
+// 🖥️ Live Output Simulation
+// ───────────────────────────────────────────────
 function startFakeConsole() {
     const output = document.getElementById('liveOutput');
     output.textContent = 'Recovery started...\n';
-    function pulse() {
-        const now = new Date();
-        const timestamp = now.toLocaleTimeString([], {hour12: false});
+    recoveryTimer = setInterval(() => {
+        const timestamp = new Date().toLocaleTimeString([], { hour12: false });
         output.textContent += `[${timestamp}] Recovery in progress...\n`;
         output.scrollTop = output.scrollHeight;
-    }
-    pulse();
-    recoveryTimer = setInterval(pulse, 5 * 60 * 1000);
+    }, 300000); // every 5 minutes
 }
 
+// ───────────────────────────────────────────────
+// ⏱️ Timer Display
+// ───────────────────────────────────────────────
 function updateRunningTime() {
     const now = new Date();
     const elapsedMs = now - recoveryStartTime;
     const minutes = Math.floor(elapsedMs / 60000);
     const seconds = Math.floor((elapsedMs % 60000) / 1000);
-    document.getElementById('running-time').textContent = `Running time: ${minutes > 0 ? minutes + ' min ' : ''}${seconds} sec`;
+    document.getElementById('running-time').textContent =
+        `Running time: ${minutes > 0 ? minutes + ' min ' : ''}${seconds} sec`;
 }
 
+// ───────────────────────────────────────────────
+// 🔄 Polling for Completion
+// ───────────────────────────────────────────────
 function startCheckingStatus() {
-    setInterval(() => {
+    statusTimer = setInterval(() => {
         fetch("/descramble/check-recovery-status/")
             .then(res => res.json())
             .then(data => {
@@ -274,6 +293,16 @@ function startCheckingStatus() {
             });
     }, 3000);
 }
+
+// ───────────────────────────────────────────────
+// 🔁 Initialize on Load
+// ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input, select').forEach(el =>
+        el.addEventListener('input', updateConstructedString)
+    );
+    updateConstructedString();
+});
 </script>
 
 </body>

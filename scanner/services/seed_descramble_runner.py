@@ -1,40 +1,106 @@
 import os
-import shlex
 import subprocess
-import re
-from datetime import datetime
-import sys
+import threading
+import shlex
+from subprocess import Popen
+from typing import Optional
 
-# Path setup
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-SEEDRECOVER_PATH = os.path.join(BASE_DIR, 'seedrecover.py')
+# ─────────────────────────────────────────────────────
+# 📁 Paths
+# ─────────────────────────────────────────────────────
 
-def run_seed_descramble_command(command_str):
-    try:
-        cleaned = re.sub(r'^python\s+seedrecover\.py\s*', '', command_str)
-        cmd_parts = shlex.split(cleaned)
+PROJECT_ROOT = os.path.abspath("C:/Users/danie/PycharmProjects/btcrecover")
+RUNTIME_DIR = os.path.join(PROJECT_ROOT, "runtime")
+DESCRAMBLE_LOG_PATH = os.path.join(RUNTIME_DIR, "descramble_output.log")
+DEBUG_LOG_PATH = os.path.join(RUNTIME_DIR, "error_debug.txt")
+RECOVERY_OUTPUT_PATH = os.path.join(RUNTIME_DIR, "recovery_output.txt")
 
-        cmd = [sys.executable, SEEDRECOVER_PATH] + cmd_parts
+# ─────────────────────────────────────────────────────
+# 🚦 Global process tracker
+# ─────────────────────────────────────────────────────
 
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True, cwd=BASE_DIR)
+ACTIVE_PROCESS: Optional[Popen] = None
 
-        match_line = None
-        if "MATCHING SEED FOUND" in output:
-            match_line = "MATCHING SEED FOUND!"
-        elif "Seed found:" in output:
-            match_line = "SEED FOUND"
+# ─────────────────────────────────────────────────────
+# 🧱 Build Command
+# ─────────────────────────────────────────────────────
 
-        derivation_path = re.search(r"Matched on Address at derivation path: ([^\n]+)", output)
-        seed_found_match = re.search(r"Seed found:\s+([a-z\s]+)", output)
-        timestamp_match = re.search(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})", output)
+def build_recovery_command(script_path: str, args_string: str) -> list[str]:
+    python_exec = os.path.join(PROJECT_ROOT, ".venv", "Scripts", "python.exe")
+    args_list = shlex.split(args_string.strip())
+    return [python_exec, script_path] + args_list
 
-        return {
-            'match_line': match_line,
-            'derivation_path': derivation_path.group(1) if derivation_path else "",
-            'timestamp': timestamp_match.group(1) if timestamp_match else datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'correct_seed': seed_found_match.group(1).strip() if seed_found_match else "",
-            'raw_output': output,
-        }
+# ─────────────────────────────────────────────────────
+# 🪵 Log Command
+# ─────────────────────────────────────────────────────
 
-    except subprocess.CalledProcessError as e:
-        return {'error': f"An error occurred:\n{e.output}"}
+def log_command_to_file(command_list: list[str]):
+    os.makedirs(os.path.dirname(DESCRAMBLE_LOG_PATH), exist_ok=True)
+    with open(DESCRAMBLE_LOG_PATH, 'w', encoding='utf-8') as f:
+        f.write(" ".join(command_list) + "\n")
+
+# ─────────────────────────────────────────────────────
+# ▶️ Run Process in Thread
+# ─────────────────────────────────────────────────────
+
+def run_descramble_command(command_list: list[str]):
+    def target():
+        global ACTIVE_PROCESS
+
+        # Clear logs
+        open(DEBUG_LOG_PATH, 'w').close()
+        open(DESCRAMBLE_LOG_PATH, 'w').close()
+        open(RECOVERY_OUTPUT_PATH, 'w').close()
+
+        try:
+            env = os.environ.copy()
+            env['NO_PAUSE'] = '1'
+            creation_flags = subprocess.CREATE_NO_WINDOW
+
+            with open(DEBUG_LOG_PATH, 'a', encoding='utf-8') as debug:
+                debug.write("Launching command:\n")
+                debug.write(" ".join(command_list) + "\n\n")
+                debug.write("Working Directory:\n" + PROJECT_ROOT + "\n\n")
+
+                ACTIVE_PROCESS = subprocess.Popen(
+                    command_list,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    cwd=PROJECT_ROOT,
+                    env=env,
+                    creationflags=creation_flags,
+                    text=True,
+                    bufsize=1
+                )
+
+                debug.write("Process started successfully.\n\n")
+                debug.flush()
+
+                with open(DESCRAMBLE_LOG_PATH, 'a', encoding='utf-8') as log_file:
+                    for line in iter(ACTIVE_PROCESS.stdout.readline, ''):
+                        log_file.write(line)
+                        log_file.flush()
+
+                ACTIVE_PROCESS.wait()
+                ACTIVE_PROCESS = None
+                debug.write("Process finished.\n")
+
+        except Exception as e:
+            with open(DEBUG_LOG_PATH, 'a', encoding='utf-8') as debug:
+                debug.write(f"❌ Exception occurred:\n{str(e)}\n")
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+
+# ─────────────────────────────────────────────────────
+# ⛔ Stop Process
+# ─────────────────────────────────────────────────────
+
+def stop_descramble_command() -> bool:
+    global ACTIVE_PROCESS
+    if ACTIVE_PROCESS and ACTIVE_PROCESS.poll() is None:
+        ACTIVE_PROCESS.terminate()
+        ACTIVE_PROCESS = None
+        return True
+    return False
