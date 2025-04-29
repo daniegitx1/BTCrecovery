@@ -13,7 +13,7 @@ tokenlist.txt
 seeds.txt
 btcrecover-tokens-auto.txt
 site/
-possible_passwords.log
+runtime/possible_passwords.log
 passwordlist.txt
 
 # Python
@@ -37,3 +37,5 @@ Thumbs.db
 
 # Docs
 docs/
+
+runtime/
