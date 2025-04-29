@@ -24,12 +24,34 @@ __version__ = "1.13.0-CryptoGuide"
 disable_security_warnings = True
 
 # Import modules included in standard libraries
-import sys, os, io, base64, hashlib, hmac, difflib, itertools, \
-       unicodedata, collections, struct, glob, atexit, re, random, multiprocessing, binascii, copy, datetime
+# Corrected btcrseed.py top part
+__version__ = "1.13.0-CryptoGuide"
+
+disable_security_warnings = True
+
+import sys
+import os
+import io
+import base64
+import hashlib
+import hmac
+import difflib
+import itertools
+import unicodedata
+import collections
+import struct
+import glob
+import atexit
+import re
+import random
+import multiprocessing
+import binascii
+import copy
+import datetime
 import bisect
 from typing import AnyStr, List, Optional, Sequence, TypeVar, Union
 
-# Import modules bundled with BTCRecover
+# BTCRecover internal imports
 from . import btcrpass
 from .addressset import AddressSet
 from lib.bitcoinlib_mod import encoding as encoding_mod
@@ -43,6 +65,55 @@ import lib.bech32 as bech32
 import lib.cardano.cardano_utils as cardano
 import lib.stacks.c32 as c32
 from lib.p2tr_helper import P2TR_tools
+
+# Detect no-pause environment variable
+no_pause = ('NO_PAUSE' in os.environ and os.environ['NO_PAUSE'] == '1')
+
+
+# Global variables
+tk_root = None
+
+def full_version():
+    return __version__ + ", btcrecover " + __version__
+
+# Move tkinter imports inside functions only when needed
+def ask_for_wallet_file():
+    import tkinter as tk
+    from tkinter import filedialog
+
+    tk_root = tk.Tk()
+    tk_root.withdraw()
+    wallet_filename = filedialog.askopenfilename(title="Please select your wallet file if you have one")
+    tk_root.destroy()
+    return wallet_filename
+
+def show_mnemonic_gui(mnemonic_sentence, path_coin):
+    import tkinter as tk
+    from tkinter import messagebox
+
+    tk_root = tk.Tk()
+    tk_root.withdraw()
+    messagebox.showinfo("Recovered Seed", f"Seed found: {mnemonic_sentence}\nPath: {path_coin}")
+    tk_root.destroy()
+
+# Safe pause at exit without stdin crash
+global pause_at_exit
+pause_at_exit = True
+
+def safe_pause_at_exit():
+    if no_pause:
+        return  # 🛑 Immediately skip pause if NO_PAUSE is set
+
+    if not multiprocessing.current_process().name.startswith("PoolWorker-"):
+        try:
+            if sys.stdin and sys.stdin.isatty():
+                input("Press Enter to exit ...")
+        except Exception:
+            pass
+
+
+atexit.register(safe_pause_at_exit)
+
 
 # Enable functions that may not work for some standard libraries in some environments
 hashlib_ripemd160_available = False

@@ -1,0 +1,1 @@
+C:\Users\danie\PycharmProjects\btcrecover\.venv\Scripts\python.exe C:\Users\danie\PycharmProjects\btcrecover\seedrecover.py --no-dupchecks --mnemonic-length 12 --language EN --dsw --addr-limit 1 --addrs 1CU62HPowYSxhHiiNu1ukSbMjrkGj4x52i --tokenlist ./docs/Usage_Examples/2020-05-02_Descrambling_a_12_word_seed/lastcombination_electrum.txt --wallet-type electrum2

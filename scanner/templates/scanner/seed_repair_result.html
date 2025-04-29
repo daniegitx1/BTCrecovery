@@ -1,0 +1,131 @@
+{% load static %}
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seed Recovery Result</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+
+            {% if error %}
+                <div class="alert alert-danger text-center fs-5">
+                    {{ error }}
+                </div>
+
+            {% elif match_line %}
+                <div class="alert alert-success text-center fs-3 fw-bold">
+                    {{ match_line }}
+                </div>
+
+                <div class="mb-4">
+                    <h5>Matched Derivation Path:</h5>
+                    <p class="text-muted">{{ derivation_path }}</p>
+                </div>
+
+                <div class="mb-4">
+                    <h5>Time:</h5>
+                    <p class="text-muted">{{ timestamp }}</p>
+                </div>
+
+                <!-- JavaScript will fill in the content below -->
+                <div class="mb-4" id="elapsed-time-block" style="display: none;">
+                    <h5>Recovery Duration:</h5>
+                    <p class="text-muted" id="elapsed-time-text"></p>
+                </div>
+
+{% with faulty_list=faulty_seed|default:''|split:" " correct_list=correct_seed|default:''|split:" " %}
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-borderless align-middle mb-0">
+        <thead>
+            <tr>
+                <th class="text-muted small">#</th>
+                <th class="text-danger small">Faulty Seed</th>
+                <th class="text-success small">Correct Seed</th>
+            </tr>
+        </thead>
+        <tbody class="small">
+            {% for i in correct_list|length|make_list %}
+                {% with idx=forloop.counter0 %}
+                    <tr>
+                        <td class="text-muted" style="width: 1%;">{{ forloop.counter }}</td>
+                        <td style="width: 30%;">
+                            {% with fword=faulty_list|index:idx cword=correct_list|index:idx %}
+                                {% if fword != cword %}
+                                    <strong class="text-danger">{{ fword|default:"—" }}</strong>
+                                {% else %}
+                                    {{ fword }}
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td style="width: 30%;">{{ correct_list|index:idx }}</td>
+                    </tr>
+                {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endwith %}
+
+
+
+                {% if raw_output %}
+                <div class="mt-5">
+                    <details>
+                        <summary class="fw-bold text-primary cursor-pointer">View Raw Output Log</summary>
+                        <pre class="bg-light border p-3 mt-2" style="white-space: pre-wrap;">{{ raw_output }}</pre>
+                    </details>
+                </div>
+                {% endif %}
+
+            {% else %}
+                <div class="alert alert-warning text-center fs-5">
+                    No matching seed found or unable to parse output.
+                </div>
+            {% endif %}
+
+            <div class="text-center mt-5">
+                <a href="{% url 'seed_repair_input' %}" class="btn btn-primary">Try Another</a>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Script must be below the DOM -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const start = localStorage.getItem('seed_timer_start');
+    if (start) {
+        const startTime = parseInt(start, 10);
+        const endTime = Date.now();
+        const durationMs = endTime - startTime;
+        const totalSeconds = Math.floor(durationMs / 1000);
+
+        const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+        const minutes = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+        const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+
+        const formatted = `${hours}:${minutes}:${seconds}`;
+        const block = document.getElementById('elapsed-time-block');
+        const text = document.getElementById('elapsed-time-text');
+
+        if (block && text) {
+            text.textContent = `${formatted} (hh:mm:ss)`;
+            block.style.display = 'block';
+        }
+
+        localStorage.removeItem('seed_timer_start');
+    }
+});
+</script>
+
+</body>
+</html>

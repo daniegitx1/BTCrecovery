@@ -15,3 +15,25 @@ btcrecover-tokens-auto.txt
 site/
 possible_passwords.log
 passwordlist.txt
+
+# Python
+__pycache__/
+db.sqlite3
+
+# Django
+*.log
+/media/
+/staticfiles/
+
+# Virtual Environment
+.venv/
+env/
+
+# PyCharm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+docs/

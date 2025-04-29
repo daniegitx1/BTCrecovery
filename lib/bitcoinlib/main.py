@@ -26,6 +26,8 @@ import logging
 from logging.handlers import RotatingFileHandler
 from lib.bitcoinlib.config.config import *
 
+ENABLE_BITCOINLIB_LOGGING = False
+
 
 # Initialize logging
 logger = logging.getLogger('bitcoinlib')
