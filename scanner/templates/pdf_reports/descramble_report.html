@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Recovery Report</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            font-size: 0.95rem;
+            margin: 2rem;
+        }
+        h2 {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+        }
+        .report-label {
+            font-weight: bold;
+            margin-bottom: 0.1rem;
+        }
+        .report-value {
+            margin-bottom: 0.6rem;
+        }
+        .report-log {
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 1rem;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 0.4rem 0 0.6rem;
+        }
+        .meta {
+            font-style: italic;
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h2>Digital Distillery Recovery Report</h2>
+    <div class="meta">Generated on {{ generated_on }}</div>
+
+    {% for key, value in report.items %}
+        <div class="report-label">{{ key }}:</div>
+        <div class="report-value">
+            {% if key == "Recovery_Log" %}
+                <div class="report-log">{{ value }}</div>
+            {% else %}
+                {{ value }}
+            {% endif %}
+        </div>
+        <hr>
+    {% endfor %}
+</body>
+</html>

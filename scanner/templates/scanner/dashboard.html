@@ -47,16 +47,18 @@
             </div>
         </div>
 
-        <!-- 🚧 Passphrase Finder -->
+        <!-- ✅ Passphrase Finder -->
         <div class="col">
-            <div class="card shadow-sm h-100 border-secondary bg-light">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-muted">🔑 Passphrase Finder</h5>
-                    <p class="card-text text-muted">Recover passphrases used with mnemonic phrases.</p>
-                    <span class="badge bg-secondary mt-2">Coming Soon</span>
+            <a href="{% url 'passphrase_finder_input' %}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">🔑 Passphrase Finder</h5>
+                        <p class="card-text text-muted">Recover BIP39 or Ethereum validator passphrases.</p>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
+
 
         <!-- 🚧 Password Finder -->
         <div class="col">
@@ -69,16 +71,16 @@
             </div>
         </div>
 
-        <!-- 🚧 Private Key Repair -->
+        <!-- ✅ Activated Private Key Repair -->
         <div class="col">
-            <div class="card shadow-sm h-100 border-secondary bg-light">
+            <a href="{% url 'private_key_repair_input' %}" class="card shadow-sm h-100 border-secondary bg-light text-decoration-none">
                 <div class="card-body text-center">
                     <h5 class="card-title text-muted">🧬 Private Key Repair</h5>
                     <p class="card-text text-muted">Recover usable keys from corrupted or partial private keys.</p>
-                    <span class="badge bg-secondary mt-2">Coming Soon</span>
                 </div>
-            </div>
+            </a>
         </div>
+
 
     </div>
 </div>

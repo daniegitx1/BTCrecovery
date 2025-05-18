@@ -5799,6 +5799,10 @@ def open_or_use(filename, mode = "r",
     if new_or_empty and os.path.exists(filename) and (os.path.getsize(filename) > 0 or not os.path.isfile(filename)):
         return None
     #
+    print(f"\n[DEBUG] Trying to open tokenlist file: {filename}")
+    print(f"[DEBUG] Absolute path resolved as: {os.path.abspath(filename)}")
+    print(f"[DEBUG] Current working directory: {os.getcwd()}")
+
     if tstr == str and "b" not in mode:
         if filename[-3:] == ".gz":
             mode = mode + "t"

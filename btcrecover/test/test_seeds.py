@@ -1773,7 +1773,7 @@ class TestRecoverySeedListsGenerators(unittest.TestCase):
                               min_tokens = 3)
 
     def test_tokenlist(self):
-        self.tokenlist_tester("SeedTokenListTest.txt")
+        self.tokenlist_tester("repair_markup_benchmark_1.txt")
 
     def tokenlist_tester(self, tokenlistfile, correct_seedlist=None, max_tokens = 12, min_tokens = 12):
         if correct_seedlist is None:

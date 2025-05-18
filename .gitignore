@@ -1,35 +1,26 @@
-*.pyc
-*.pyo
-/addresses.db
-.idea/
-python
-/addresses-BTC.db
-venv/
-HashCheck.txt
-bitcoinlib/.coveragerc
-wallet.aes.json
-test.txt
-tokenlist.txt
-seeds.txt
-btcrecover-tokens-auto.txt
-site/
-runtime/possible_passwords.log
-passwordlist.txt
-
 # Python
 __pycache__/
-db.sqlite3
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Python environments
+.venv/
+venv/
+env/
 
 # Django
 *.log
+*.db
+db.sqlite3
 /media/
-/staticfiles/
+staticfiles/
+site/
 
-# Virtual Environment
-.venv/
-env/
-
-# PyCharm
+# IDEs and editors
+.idea/
+.vscode/
 
 # OS
 .DS_Store
@@ -38,4 +29,25 @@ Thumbs.db
 # Docs
 docs/
 
+# Logs and outputs
+runtime/*.log
+runtime/*.txt
+!runtime/.gitkeep
+
+# Project-specific files
+/addresses.db
+/addresses-BTC.db
+wallet.aes.json
+HashCheck.txt
+bitcoinlib/.coveragerc
+test.txt
+tokenlist.txt
+seeds.txt
+btcrecover-tokens-auto.txt
+passwordlist.txt
+
+# Temporary directories or placeholder folders
 runtime/
+
+# Bytecode and temp files
+*.bak

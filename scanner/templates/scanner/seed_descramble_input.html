@@ -20,49 +20,29 @@
             justify-content: center;
             margin-bottom: 2rem;
         }
-        .form-title img {
-            height: 60px;
-            margin-right: 15px;
-        }
-        .form-title-text {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
+        .form-title img { height: 60px; margin-right: 15px; }
+        .form-title-text { font-size: 1.8rem; font-weight: bold; }
         .blinking-dot {
-            height: 12px;
-            width: 12px;
-            background-color: red;
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 10px;
-            animation: blink 1s infinite;
-            visibility: hidden;
+            height: 12px; width: 12px; background-color: red;
+            border-radius: 50%; display: inline-block;
+            margin-left: 10px; animation: blink 1s infinite; visibility: hidden;
         }
         @keyframes blink { 50% { opacity: 0; } }
         #liveOutput {
-            background-color: #000;
-            color: #00FF00;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            height: 400px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            scroll-behavior: smooth;
+            background-color: #000; color: #00FF00;
+            padding: 1rem; border-radius: 0.5rem;
+            height: 400px; overflow-y: auto;
+            font-family: monospace; font-size: 0.9rem;
+            white-space: pre-wrap; scroll-behavior: smooth;
         }
+        .full-width { max-width: 100%; }
         .button-row {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 2rem;
+            display: flex; justify-content: center;
+            gap: 20px; margin-top: 2rem;
         }
-        .equal-width-btn {
-            width: 200px;
-        }
+        .equal-width-btn { width: 200px; }
     </style>
 </head>
-
 <body>
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -77,74 +57,82 @@
                 <div class="alert alert-danger text-center fs-5">{{ error }}</div>
             {% endif %}
 
+            <div class="form-section">
+                <p class="mb-2">
+                    <strong>Seed Descramble</strong> will repair a faulty mnemonic or seed phrase.
+                </p>
+                <ul class="mb-0 ps-3">
+                    <li>It will fix the seed words if some of the words are swapped around or scrambled.</li>
+                    <li>The faulty seed must be complete, with all words from the official word list.</li>
+                    <li>These can be no missing words and no typos.</li>
+                    <li>It will fix maximum three swaps in the seed, although this will take VERY long to descramble.</li>
+                </ul>
+            </div>
+
             <form id="descrambleForm" method="post" action="{% url 'seed_descramble_result' %}">
                 {% csrf_token %}
+                <input type="hidden" id="fixed_args" value="--no-dupchecks --no-eta --dsw">
 
                 <div class="form-section">
+                    <div class="mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="modeToggle" id="pasteMode" value="paste">
+                            <label class="form-check-label" for="pasteMode">Paste string</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="modeToggle" id="buildMode" value="build" checked>
+                            <label class="form-check-label" for="buildMode">Build string</label>
+                        </div>
+                    </div>
                     <h5>Command String</h5>
-                    <textarea id="constructedString" name="constructed_string" class="form-control" rows="4" placeholder="Paste or build command here..."></textarea>
+                    <textarea id="constructedString" name="constructed_string" class="form-control full-width" rows="3" placeholder="Paste or build command here..."></textarea>
                 </div>
+
+                <!-- Start of Builder Input Wrapper -->
+                <div id="builderInputs">
 
                 <div class="form-section">
-                    <h5>List File</h5>
-                    {{ form.tokenlist_file }}
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="reviewListFile()">Review List File</button>
+                    <h5>List File <span style="color: red;">*</span></h5>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <input type="text" name="tokenlist_file" class="form-control full-width" placeholder="a file containing your words" readonly>
+                        <input type="file" id="tokenlistFilePicker" accept=".txt" style="display: none;" onchange="handleListFileSelect(this)">
+                        <button type="button" class="btn btn-sm btn-secondary text-white" onclick="document.getElementById('tokenlistFilePicker').click()">Choose File</button>
+                        <button type="button" class="btn btn-sm btn-danger text-white" onclick="clearListFile()">Clear</button>
+                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="reviewListFile()">Review List File</button>
+                    </div>
                 </div>
+
+
+                <div class="form-section"><h5>Wallet Type <span style="color: red;">*</span></h5>{{ form.wallet_type }}</div>
+                <div class="form-section"><h5>Addresses <span style="color: red;">*</span></h5>{{ form.addresses }}</div>
+                <div class="form-section"><h5>Address Limit <span style="color: red;">*</span></h5>{{ form.address_limit }}</div>
+                <div class="form-section"><h5>Language <span style="color: red;">*</span></h5>{{ form.language }}</div>
+                <div class="form-section"><h5>Mnemonic Length <span style="color: red;">*</span></h5>{{ form.mnemonic_length }}</div>
 
                 <div class="form-section">
-                    <h5>Wallet Type</h5>
-                    {{ form.wallet_type }}
+                    <h5 style="color: grey;">Derivation Paths (optional)</h5>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <input type="text" name="derivation_file" class="form-control full-width" placeholder="a derivation path file (e.g., paths.txt)" readonly>
+                        <input type="file" id="derivationFilePicker" accept=".txt" style="display: none;" onchange="handleDerivationFileSelect(this)">
+                        <button type="button" class="btn btn-sm btn-secondary text-white" onclick="document.getElementById('derivationFilePicker').click()">Choose File</button>
+                        <button type="button" class="btn btn-sm btn-danger text-white" onclick="clearDerivationFile()">Clear</button>
+                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="reviewDerivationFile()">Review Derivation File</button>
+                    </div>
+                    <div class="form-group mt-2">
+                        <label for="manualDerivation" class="form-label">Manual Derivation Path (overrides file)</label>
+                        <input type="text" name="manual_derivation" id="manualDerivation" class="form-control full-width" placeholder="e.g., m/44'/0'/0'/0">
+                    </div>
                 </div>
 
-                <div class="form-section">
-                    <h5>Addresses</h5>
-                    {{ form.addresses }}
-                </div>
+                </div> <!-- End #builderInputs -->
 
-                <div class="form-section">
-                    <h5>Address Limit</h5>
-                    {{ form.address_limit }}
-                </div>
-
-                <div class="form-section">
-                    <h5>Mnemonic Length</h5>
-                    {{ form.mnemonic_length }}
-                </div>
-
-                <div class="form-section">
-                    <h5>Language</h5>
-                    {{ form.language }}
-                </div>
-
-                <div class="form-section">
-                    <h5>Derivation Path</h5>
-                    <select id="derivationDropdown" class="form-select mb-2">
-                        <option value="BTC.txt">BTC</option>
-                        <option value="ETH.txt">ETH</option>
-                        <option value="DOGE.txt">DOGE</option>
-                        <option value="LTC.txt">LTC</option>
-                        <option value="XRP.txt">XRP</option>
-                        <option value="DASH.txt">DASH</option>
-                        <option value="DGB.txt">DGB</option>
-                        <option value="GRS.txt">GRS</option>
-                        <option value="MONA.txt">MONA</option>
-                        <option value="ZIL.txt">ZIL</option>
-                        <option value="VTC.txt">VTC</option>
-                        <option value="Electrum.txt">Electrum</option>
-                        <option value="ADA.txt">ADA</option>
-                    </select>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="reviewDerivationFile()">Review Default Path</button>
-                    <input type="text" id="customDerivationPath" class="form-control mt-2" placeholder="Optional custom bip32 path (e.g. m/44'/0'/0'/0)">
-                </div>
-
-                <div class="button-row">
-                    <button type="button" class="btn btn-primary btn-lg equal-width-btn" onclick="startRecovery()">Start Recovery</button>
+                <div class="form-section text-center">
+                    <button type="button" class="btn btn-primary btn-lg equal-width-btn me-3" onclick="startRecovery()">Start Recovery</button>
                     <button type="button" id="stopButton" class="btn btn-danger btn-lg equal-width-btn" onclick="stopRecovery()" disabled>Stop Recovery</button>
                 </div>
             </form>
 
             <hr class="my-5">
-
             <div class="form-section">
                 <h5>Live Output <span class="blinking-dot" id="liveIndicator"></span></h5>
                 <pre id="liveOutput">Waiting to start...</pre>
@@ -158,73 +146,97 @@
 </div>
 
 <script>
-// ───────────────────────────────────────────────
-// 🛠️ Utility Functions
-// ───────────────────────────────────────────────
+let recoveryTimer;
+let statusTimer;
+let recoveryStartTime;
+
+function toggleBuilderInputs() {
+    const isPaste = document.getElementById('pasteMode').checked;
+    document.getElementById('builderInputs').style.display = isPaste ? 'none' : 'block';
+    updateConstructedString();
+}
+
 function quoteIfNeeded(str) {
     str = str.trim();
-    return (str.includes(' ') && !(str.startsWith('"') && str.endsWith('"')))
+    return (str.includes(' ') || str.includes("'")) && !(str.startsWith('"') && str.endsWith('"'))
         ? `"${str}"`
         : str;
 }
 
 
-// ───────────────────────────────────────────────
-// 🧠 Command String Builder
-// ───────────────────────────────────────────────
 function updateConstructedString() {
-    const walletType = document.querySelector('[name="wallet_type"]').value.trim();
-    const addresses = document.querySelector('[name="addresses"]').value.trim();
-    const addressLimit = document.querySelector('[name="address_limit"]').value.trim();
-    const mnemonicLength = document.querySelector('[name="mnemonic_length"]').value.trim();
-    const language = document.querySelector('[name="language"]').value.trim().toUpperCase();
-    const customPath = document.getElementById('customDerivationPath').value.trim();
-    const tokenlistFile = document.querySelector('[name="tokenlist_file"]').value.split('\\').pop();
+    const mode = document.querySelector('[name="modeToggle"]:checked')?.value;
+    if (mode !== 'build') return;
 
-    let parts = ['--no-dupchecks', '--no-eta', '--dsw'];
-    if (walletType) parts.push(`--wallet-type ${walletType}`);
-    if (addresses) parts.push(`--addrs ${addresses}`);
-    if (addressLimit) parts.push(`--addr-limit ${addressLimit}`);
-    if (mnemonicLength) parts.push(`--mnemonic-length ${mnemonicLength}`);
-    if (language) parts.push(`--language ${language}`);
-    if (customPath) parts.push(`--bip32-path ${quoteIfNeeded(customPath)}`);
-    if (tokenlistFile) parts.push(`--tokenlist ${quoteIfNeeded('./btcrecover/dd-lists/' + tokenlistFile)}`);
+    const args = [];
+    const fixed = document.getElementById('fixed_args')?.value.trim();
+    if (fixed) args.push(fixed);
 
-    // ✅ MUST BE INSIDE the function
-    const cmd = parts.join(' ');
-    document.getElementById('constructedString').value = cmd;
-}
+    const wallet = document.querySelector('[name="wallet_type"]')?.value;
+    const addrs = document.querySelector('[name="addresses"]')?.value.trim();
+    const limit = document.querySelector('[name="address_limit"]')?.value.trim();
+    const wordlistRaw = document.querySelector('[name="tokenlist_file"]')?.value.trim();
+    const manualDerivationRaw = document.querySelector('[name="manual_derivation"]')?.value.trim();
+    const derivFileRaw = document.querySelector('[name="derivation_file"]')?.value.trim();
+    const lang = document.querySelector('[name="language"]')?.value;
+    const length = document.querySelector('[name="mnemonic_length"]')?.value.trim();
 
-// ───────────────────────────────────────────────
-// 📁 File Review Handlers
-// ───────────────────────────────────────────────
-function reviewListFile() {
-    const fileInput = document.querySelector('[name="tokenlist_file"]');
-    const filename = fileInput.value.split("\\").pop();
-    if (filename) {
-        fetch(`/open-list-file/${filename}/`);
-    } else {
-        alert("Please select a list file first.");
+    if (wordlistRaw) {
+        const wordlistPath = `btcrecover/dd-lists/${wordlistRaw}`;
+        args.push(`--tokenlist ${quoteIfNeeded(wordlistPath)}`);
     }
+    if (wallet) args.push(`--wallet-type ${wallet}`);
+    if (addrs) args.push(`--addrs ${addrs}`);
+    if (limit) args.push(`--addr-limit ${limit}`);
+    if (lang) args.push(`--language ${lang}`);
+    if (length) args.push(`--mnemonic-length ${length}`);
+
+    if (manualDerivationRaw) {
+        args.push(`--bip32-path ${quoteIfNeeded(manualDerivationRaw)}`);
+    } else if (derivFileRaw) {
+        const pathlistPath = `derivationpath-lists/${derivFileRaw}`;
+        args.push(`--pathlist ${quoteIfNeeded(pathlistPath)}`);
+    }
+
+
+    document.getElementById('constructedString').value = args.join(' ');
 }
 
-function reviewDerivationFile() {
-    const selected = document.getElementById('derivationDropdown').value;
-    fetch(`/open-derivation-file/${selected}/`);
-}
-
-// ───────────────────────────────────────────────
-// 🚀 Recovery Start / Stop
-// ───────────────────────────────────────────────
 function startRecovery() {
     const args = document.getElementById('constructedString').value.trim();
+    const mode = document.querySelector('[name="modeToggle"]:checked')?.value;
+
     if (!args) {
-        alert("Paste or build the command first.");
+        alert("❗ Please enter or build a command string.");
         return;
     }
 
+    if (mode === 'build') {
+        const wordlist = document.querySelector('[name="tokenlist_file"]')?.value.trim();
+        const wallet = document.querySelector('[name="wallet_type"]')?.value;
+        const addrs = document.querySelector('[name="addresses"]')?.value.trim();
+
+        if (!wordlist) {
+            alert("❗ You must provide a list file.");
+            return;
+        }
+
+        if (!wallet) {
+            alert("❗ Please select a wallet type.");
+            return;
+        }
+
+        if (!addrs) {
+            alert("❗ Please enter one or more known addresses.");
+            return;
+        }
+    }
+
     fetch(`/descramble/start-recovery/?args=${encodeURIComponent(args)}`)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("Server error");
+            return res.json();
+        })
         .then(data => {
             if (data.success) {
                 document.getElementById('stopButton').disabled = false;
@@ -234,8 +246,11 @@ function startRecovery() {
                 recoveryStartTime = new Date();
                 statusTimer = setInterval(updateRunningTime, 1000);
             } else {
-                alert("Failed to start recovery: " + data.error);
+                alert("❌ Failed to start recovery: " + data.error);
             }
+        })
+        .catch(err => {
+            alert("❌ Error: " + err.message);
         });
 }
 
@@ -249,9 +264,6 @@ function stopRecovery() {
         });
 }
 
-// ───────────────────────────────────────────────
-// 🖥️ Live Output Simulation
-// ───────────────────────────────────────────────
 function startFakeConsole() {
     const output = document.getElementById('liveOutput');
     output.textContent = 'Recovery started...\n';
@@ -259,24 +271,18 @@ function startFakeConsole() {
         const timestamp = new Date().toLocaleTimeString([], { hour12: false });
         output.textContent += `[${timestamp}] Recovery in progress...\n`;
         output.scrollTop = output.scrollHeight;
-    }, 300000); // every 5 minutes
+    }, 300000); // every 5 min
 }
 
-// ───────────────────────────────────────────────
-// ⏱️ Timer Display
-// ───────────────────────────────────────────────
 function updateRunningTime() {
     const now = new Date();
-    const elapsedMs = now - recoveryStartTime;
-    const minutes = Math.floor(elapsedMs / 60000);
-    const seconds = Math.floor((elapsedMs % 60000) / 1000);
+    const elapsed = now - recoveryStartTime;
+    const min = Math.floor(elapsed / 60000);
+    const sec = Math.floor((elapsed % 60000) / 1000);
     document.getElementById('running-time').textContent =
-        `Running time: ${minutes > 0 ? minutes + ' min ' : ''}${seconds} sec`;
+        `Running time: ${min > 0 ? min + ' min ' : ''}${sec} sec`;
 }
 
-// ───────────────────────────────────────────────
-// 🔄 Polling for Completion
-// ───────────────────────────────────────────────
 function startCheckingStatus() {
     statusTimer = setInterval(() => {
         fetch("/descramble/check-recovery-status/")
@@ -287,23 +293,62 @@ function startCheckingStatus() {
                     clearInterval(statusTimer);
                     document.getElementById('liveIndicator').style.visibility = 'hidden';
                     setTimeout(() => {
-                        window.location.href = "{% url 'seed_descramble_result' %}";
+                        window.location.href = "/descramble/result/";
                     }, 2000);
                 }
             });
     }, 3000);
 }
 
-// ───────────────────────────────────────────────
-// 🔁 Initialize on Load
-// ───────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('input, select').forEach(el =>
+function handleListFileSelect(input) {
+    const filename = input.value.split("\\").pop();
+    document.querySelector('[name="tokenlist_file"]').value = filename;
+    updateConstructedString();
+}
+
+function clearListFile() {
+    document.querySelector('[name="tokenlist_file"]').value = '';
+    document.getElementById('tokenlistFilePicker').value = '';
+    updateConstructedString();
+}
+
+function handleDerivationFileSelect(input) {
+    const filename = input.value.split("\\").pop();
+    document.querySelector('[name="derivation_file"]').value = filename;
+    updateConstructedString();
+}
+
+function clearDerivationFile() {
+    document.querySelector('[name="derivation_file"]').value = '';
+    document.getElementById('derivationFilePicker').value = '';
+    updateConstructedString();
+}
+
+function reviewListFile() {
+    const filename = document.querySelector('[name="tokenlist_file"]').value.trim().split("\\").pop();
+    if (filename) fetch(`/descramble/open-list-file/${filename}/`);
+    else alert("Please select a list file first.");
+}
+
+function reviewDerivationFile() {
+    const filename = document.querySelector('[name="derivation_file"]').value.trim().split("\\").pop();
+    if (filename) fetch(`/descramble/open-derivation-file/${filename}/`);
+    else alert("Please select a derivation file first.");
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    toggleBuilderInputs();
+    document.querySelectorAll('input, select, textarea').forEach(el =>
         el.addEventListener('input', updateConstructedString)
     );
+    document.getElementById('pasteMode').addEventListener('change', toggleBuilderInputs);
+    document.getElementById('buildMode').addEventListener('change', toggleBuilderInputs);
     updateConstructedString();
 });
 </script>
+
+
+
 
 </body>
 </html>

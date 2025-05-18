@@ -48,7 +48,6 @@
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
 
-            <!-- Title -->
             <div class="form-title">
                 <img src="https://danie.capetown/wp-content/uploads/2025/04/ddlogo2_medium.png" alt="Logo">
                 <div class="form-title-text">Digital Distillery Seed Repair</div>
@@ -58,12 +57,21 @@
                 <div class="alert alert-danger text-center fs-5">{{ error }}</div>
             {% endif %}
 
-            <!-- Form -->
+            <div class="form-section">
+                <p class="mb-2">
+                    <strong>Seed Repair</strong> will repair a faulty mnemonic or seed phrase.
+                </p>
+                <ul class="mb-0 ps-3">
+                    <li>A faulty seed could have missing words, typos, or words substituted by completely different words.</li>
+                    <li>Seed Repair will <strong>not</strong> fix a seed with correct words that are scrambled or swapped around.</li>
+                    <li>Seed Repair supports up to <strong>2 typos + 1 substitute</strong> word, or a maximum of <strong>2 substitute words</strong>.</li>
+                </ul>
+            </div>
+
             <form id="repairForm" method="post" action="{% url 'seed_repair_result' %}">
                 {% csrf_token %}
                 <input type="hidden" id="fixed_args" value="--no-dupchecks --no-eta --dsw">
 
-                <!-- Command String -->
                 <div class="form-section">
                     <div class="mb-3">
                         <div class="form-check form-check-inline">
@@ -75,63 +83,65 @@
                             <label class="form-check-label" for="buildMode">Build string</label>
                         </div>
                     </div>
-
                     <h5>Command String</h5>
                     <textarea id="constructedString" name="constructed_string" class="form-control full-width" rows="3" placeholder="Paste or build command here..."></textarea>
                 </div>
 
-                <!-- Seed Words -->
-                <div class="form-section">
-                    <h5>Seed Words <span style="color: red;">*</span></h5>
+                <div id="builderInputs">
 
-                    <label class="form-label">Paste Seed Words (Option 1):</label>
-                    {{ form.seed_phrase }}
+<div class="form-section">
+    <h5>Seed Words <span style="color: red;">*</span></h5>
 
-                    <hr>
+    <label class="form-label">Paste Seed Words (Option 1):</label>
+    {{ form.seed_phrase }}
 
-                    <label class="form-label">Use Word List File (Option 2):</label>
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                        <input type="text" name="wordlist_file" class="form-control full-width" placeholder="a file containing your words" readonly>
-                        <input type="file" id="filePicker" accept=".txt" style="display: none;" onchange="handleFileSelect(this)">
-                        <button type="button" class="btn btn-sm btn-secondary text-white" onclick="document.getElementById('filePicker').click()">Choose File</button>
-                        <button type="button" class="btn btn-sm btn-danger text-white" onclick="clearFile()">Clear</button>
-                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="reviewListFile()">Review List File</button>
+    <hr>
+
+    <label class="form-label">Use Word List File (Option 2):</label>
+    <div class="d-flex flex-wrap align-items-center gap-2 align-items-center">
+        <!-- Display selected filename -->
+        <input type="text" name="tokenlist_file" class="form-control full-width" placeholder="a file containing your words" readonly>
+
+        <!-- Hidden file picker -->
+        <input type="file" id="filePicker" accept=".txt" style="display: none;" onchange="handleFileSelect(this)">
+
+        <!-- Buttons -->
+        <button type="button" class="btn btn-sm btn-secondary text-white" onclick="document.getElementById('filePicker').click()">Choose File</button>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearListFile()">Clear</button>
+        <button type="button" class="btn btn-sm btn-primary text-white" onclick="reviewListFile()">Review List File</button>
+    </div>
+</div>
+
+
+                    <div class="form-section"><h5>Wallet Type <span style="color: red;">*</span></h5>{{ form.wallet_type }}</div>
+                    <div class="form-section"><h5>Addresses <span style="color: red;">*</span></h5>{{ form.addresses }}</div>
+                    <div class="form-section"><h5>Address Limit <span style="color: red;">*</span></h5>{{ form.address_limit }}</div>
+                    <div class="form-section"><h5>Language <span style="color: red;">*</span></h5>{{ form.language }}</div>
+                    <div class="form-section"><h5>Mnemonic Length <span style="color: red;">*</span></h5>{{ form.mnemonic_length }}</div>
+
+                    <div class="form-section">
+                        <h5 style="color: grey;">Derivation Paths (optional)</h5>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <input type="text" name="derivation_file" class="form-control full-width" placeholder="a derivation path file (e.g., paths.txt)" readonly>
+                            <input type="file" id="derivationFilePicker" accept=".txt" style="display: none;" onchange="handleDerivationFileSelect(this)">
+                            <button type="button" class="btn btn-sm btn-secondary text-white" onclick="document.getElementById('derivationFilePicker').click()">Choose File</button>
+                            <button type="button" class="btn btn-sm btn-danger text-white" onclick="clearDerivationFile()">Clear</button>
+                            <button type="button" class="btn btn-sm btn-primary text-white" onclick="reviewDerivationFile()">Review Derivation File</button>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="manualDerivation" class="form-label">Manual Derivation Path (overrides file)</label>
+                            <input type="text" name="manual_derivation" id="manualDerivation" class="form-control full-width" placeholder="e.g., m/84'/0'/0'/0/0">
+                        </div>
                     </div>
+
                 </div>
 
-                <!-- Wallet Info -->
-                <div class="form-section"><h5>Wallet Type <span style="color: red;">*</span></h5>{{ form.wallet_type }}</div>
-                <div class="form-section"><h5>Addresses <span style="color: red;">*</span></h5>{{ form.addresses }}</div>
-                <div class="form-section"><h5>Address Limit <span style="color: red;">*</span></h5>{{ form.address_limit }}</div>
-                <div class="form-section"><h5>Language <span style="color: red;">*</span></h5>{{ form.language }}</div>
-                <div class="form-section"><h5>Mnemonic Length <span style="color: red;">*</span></h5>{{ form.mnemonic_length }}</div>
-
-                <!-- Derivation Paths -->
-                <div class="form-section">
-                    <h5 style="color: grey;">Derivation Paths (optional)</h5>
-
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                        <input type="text" name="derivation_file" class="form-control full-width" placeholder="a derivation path file (e.g., paths.txt)" readonly>
-                        <input type="file" id="derivationFilePicker" accept=".txt" style="display: none;" onchange="handleDerivationFileSelect(this)">
-                        <button type="button" class="btn btn-sm btn-secondary text-white" onclick="document.getElementById('derivationFilePicker').click()">Choose File</button>
-                        <button type="button" class="btn btn-sm btn-danger text-white" onclick="clearDerivationFile()">Clear</button>
-                        <button type="button" class="btn btn-sm btn-primary text-white" onclick="reviewDerivationFile()">Review Derivation File</button>
-                    </div>
-
-                    <div class="form-group mt-2">
-                        <label for="manualDerivation" class="form-label">Manual Derivation Path (overrides file)</label>
-                        <input type="text" name="manual_derivation" id="manualDerivation" class="form-control full-width" placeholder="e.g., m/84'/0'/0'/0/0">
-                    </div>
-                </div>
-
-                <!-- Recovery Buttons -->
                 <div class="form-section text-center">
                     <button type="button" class="btn btn-primary btn-lg equal-width-btn me-3" onclick="startRecovery()">Start Recovery</button>
                     <button type="button" id="stopButton" class="btn btn-danger btn-lg equal-width-btn" onclick="stopRecovery()" disabled>Stop Recovery</button>
                 </div>
             </form>
 
-            <!-- Live Output Console -->
             <hr class="my-5">
             <div class="form-section">
                 <h5>Live Output <span class="blinking-dot" id="liveIndicator"></span></h5>
@@ -144,22 +154,29 @@
         </div>
     </div>
 </div>
-</body>
+
 
 <script>
-/* ─────────────────────────────────────────────────────
-   🔁 Global Timers
-───────────────────────────────────────────────────── */
-let recoveryTimer;
-let statusTimer;
-let recoveryStartTime;
+function toggleBuilderInputs() {
+    const isPaste = document.getElementById('pasteMode').checked;
+    document.getElementById('builderInputs').style.display = isPaste ? 'none' : 'block';
+    updateConstructedString();
+}
 
-/* ─────────────────────────────────────────────────────
-   🧠 Command String Builder
-───────────────────────────────────────────────────── */
+function quoteIfNeeded(str) {
+    str = str.trim();
+    const needsQuotes = str.includes(' ') || str.includes('/') || str.includes("'");
+    return (needsQuotes && !(str.startsWith('"') && str.endsWith('"')))
+        ? `"${str}"`
+        : str;
+}
+
+
 function updateConstructedString() {
     const mode = document.querySelector('[name="modeToggle"]:checked')?.value;
-    if (mode !== 'build') return;  // Only auto-generate if "Build string" selected
+
+    // Prevent overwriting manually pasted string
+    if (mode === 'paste') return;
 
     const args = [];
     const fixed = document.getElementById('fixed_args')?.value.trim();
@@ -169,7 +186,8 @@ function updateConstructedString() {
     const wallet = document.querySelector('[name="wallet_type"]')?.value;
     const addrs = document.querySelector('[name="addresses"]')?.value.trim();
     const limit = document.querySelector('[name="address_limit"]')?.value.trim();
-    const wordlist = document.querySelector('[name="wordlist_file"]')?.value.trim();
+    const tokenFileName = document.querySelector('[name="tokenlist_file"]')?.value.trim();
+    const wordlist = tokenFileName ? `btcrecover/dd-lists/${tokenFileName}` : '';
     const lang = document.querySelector('[name="language"]')?.value;
     const length = document.querySelector('[name="mnemonic_length"]')?.value.trim();
     const derivFile = document.querySelector('[name="derivation_file"]')?.value.trim();
@@ -190,37 +208,28 @@ function updateConstructedString() {
     if (manualDerivation) {
         args.push(`--bip32-path ${quoteIfNeeded(manualDerivation)}`);
     } else if (derivFile) {
-        args.push(`--pathlist ${quoteIfNeeded(derivFile)}`);
+        const pathlistPath = `derivationpath-lists/${derivFile}`;
+        args.push(`--pathlist ${quoteIfNeeded(pathlistPath)}`);
     }
 
     document.getElementById('constructedString').value = args.join(' ');
 }
 
-function quoteIfNeeded(str) {
-    str = str.trim();
-    return (str.includes(' ') && !(str.startsWith('"') && str.endsWith('"')))
-        ? `"${str}"`
-        : str;
-}
 
-/* ─────────────────────────────────────────────────────
-   🚀 Recovery Start/Stop
-───────────────────────────────────────────────────── */
 function startRecovery() {
     const args = document.getElementById('constructedString').value.trim();
     const mode = document.querySelector('[name="modeToggle"]:checked')?.value;
 
-    // Only validate if mode is "build"
-    if (mode === 'build') {
-        const seed = document.querySelector('[name="seed_phrase"]').value.trim();
-        const wordlist = document.querySelector('[name="wordlist_file"]').value.trim();
-        const wallet = document.querySelector('[name="wallet_type"]').value;
-        const addrs = document.querySelector('[name="addresses"]').value.trim();
+    if (!args) {
+        alert("❗ Please enter or build a command string.");
+        return;
+    }
 
-        if (!args) {
-            alert("❗ Please build the command string.");
-            return;
-        }
+    if (mode === 'build') {
+        const seed = document.querySelector('[name="seed_phrase"]')?.value.trim();
+        const wordlist = document.querySelector('[name="tokenlist_file"]')?.value.trim();
+        const wallet = document.querySelector('[name="wallet_type"]')?.value;
+        const addrs = document.querySelector('[name="addresses"]')?.value.trim();
 
         if (!seed && !wordlist) {
             alert("❗ You must provide either seed words or a wordlist file.");
@@ -238,7 +247,6 @@ function startRecovery() {
         }
     }
 
-    // Proceed regardless of mode
     fetch(`/repair/start-recovery/?args=${encodeURIComponent(args)}`)
         .then(res => res.json())
         .then(data => {
@@ -255,7 +263,6 @@ function startRecovery() {
         });
 }
 
-
 function stopRecovery() {
     fetch("/repair/stop-recovery/")
         .then(() => {
@@ -266,9 +273,6 @@ function stopRecovery() {
         });
 }
 
-/* ─────────────────────────────────────────────────────
-   📺 Recovery Progress
-───────────────────────────────────────────────────── */
 function startFakeConsole() {
     const output = document.getElementById('liveOutput');
     output.textContent = 'Recovery started...\n';
@@ -276,7 +280,7 @@ function startFakeConsole() {
         const timestamp = new Date().toLocaleTimeString([], { hour12: false });
         output.textContent += `[${timestamp}] Recovery in progress...\n`;
         output.scrollTop = output.scrollHeight;
-    }, 300000); // every 5 minutes
+    }, 300000);
 }
 
 function updateRunningTime() {
@@ -305,62 +309,90 @@ function startCheckingStatus() {
     }, 3000);
 }
 
-/* ─────────────────────────────────────────────────────
-   📂 File Handlers
-───────────────────────────────────────────────────── */
 function handleFileSelect(input) {
-    const filename = input.value.split("\\").pop();
-    document.querySelector('[name="wordlist_file"]').value = filename;
-    updateConstructedString();
-}
-
-function clearFile() {
-    document.querySelector('[name="wordlist_file"]').value = '';
-    document.getElementById('filePicker').value = '';
-    updateConstructedString();
+    if (input.files.length > 0) {
+        const filename = input.files[0].name;
+        document.querySelector('[name="tokenlist_file"]').value = filename;
+        const label = document.getElementById("selectedListFileName");
+        if (label) label.textContent = filename;
+        updateConstructedString();
+    }
 }
 
 function reviewListFile() {
-    const filename = document.querySelector('[name="wordlist_file"]').value.trim().split("\\").pop();
-    if (filename) fetch(`/repair/open-list-file/${filename}/`);
-    else alert("Please select a wordlist file first.");
+    const filename = document.querySelector('[name="tokenlist_file"]').value.trim();
+    if (!filename) return alert("❗ No file selected.");
+
+    fetch(`/repair/open-list-file/${encodeURIComponent(filename)}/`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert("❌ Could not open file: " + (data.error || "Unknown error"));
+            }
+        })
+        .catch(err => {
+            alert("❌ Error opening file: " + err);
+        });
 }
 
 function handleDerivationFileSelect(input) {
-    const filename = input.value.split("\\").pop();
-    document.querySelector('[name="derivation_file"]').value = filename;
-    updateConstructedString();
+    if (input.files.length > 0) {
+        const filename = input.files[0].name;
+        document.querySelector('[name="derivation_file"]').value = filename;
+        updateConstructedString();
+    }
 }
 
 function clearDerivationFile() {
-    document.querySelector('[name="derivation_file"]').value = '';
-    document.getElementById('derivationFilePicker').value = '';
+    const fileInput = document.getElementById("derivationFilePicker");
+    if (fileInput) fileInput.value = "";
+    const field = document.querySelector('[name="derivation_file"]');
+    if (field) field.value = "";
     updateConstructedString();
 }
 
 function reviewDerivationFile() {
-    const filename = document.querySelector('[name="derivation_file"]').value.trim().split("\\").pop();
-    if (filename) fetch(`/repair/open-derivation-file/${filename}/`);
-    else alert("Please select a derivation file first.");
+    const filename = document.querySelector('[name="derivation_file"]').value.trim();
+    if (!filename) return alert("❗ No file selected.");
+
+    fetch(`/repair/open-derivation-file/${encodeURIComponent(filename)}/`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert("❌ Could not open file: " + (data.error || "Unknown error"));
+            }
+        })
+        .catch(err => {
+            alert("❌ Error opening file: " + err);
+        });
 }
 
-/* ─────────────────────────────────────────────────────
-   🔁 Init Event Listeners
-───────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-    // Live update if in "Build" mode
+window.addEventListener("DOMContentLoaded", () => {
+    toggleBuilderInputs();
     document.querySelectorAll('input, select, textarea').forEach(el =>
         el.addEventListener('input', updateConstructedString)
     );
+    document.getElementById('pasteMode').addEventListener('change', toggleBuilderInputs);
+    document.getElementById('buildMode').addEventListener('change', toggleBuilderInputs);
 
-    // Mode toggle change handler
-    document.querySelectorAll('[name="modeToggle"]').forEach(el =>
-        el.addEventListener('change', updateConstructedString)
-    );
+    const clearBtn = document.getElementById("clearListFileBtn");
+    const fileInput = document.getElementById("filePicker");
+    const fileNameLabel = document.getElementById("selectedListFileName");
 
-    updateConstructedString();  // Initial build on page load
+    if (clearBtn && fileInput && fileNameLabel) {
+        clearBtn.addEventListener("click", function () {
+            fileInput.value = "";
+            fileNameLabel.textContent = "No file selected";
+            document.querySelector('[name="tokenlist_file"]').value = "";
+            updateConstructedString();
+        });
+    }
+
+    updateConstructedString();
 });
 </script>
+
+
 
 
 </body>

@@ -86,7 +86,7 @@ class SeedRepairForm(forms.Form):
         label="Wordlist File (Optional)",
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': './btcrecover/dd-lists/seedwords_plain.txt'
+            'placeholder': './btcrecover/dd-lists/repair_plain_benchmark_12.txt'
         }),
         required=False
     )
