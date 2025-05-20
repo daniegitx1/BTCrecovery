@@ -28,6 +28,9 @@ urlpatterns = [
 
 ]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
 # Expose dd-lists and derivationpath-lists CORRECTLY
 urlpatterns += static('/dd-lists/', document_root=os.path.join(settings.BASE_DIR, 'btcrecover', 'dd-lists'))
 urlpatterns += static('/derivationpath-lists/', document_root=os.path.join(settings.BASE_DIR, 'derivationpath-lists'))

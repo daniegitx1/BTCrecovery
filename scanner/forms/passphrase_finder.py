@@ -1,5 +1,41 @@
 from django import forms
 
+WALLET_TYPE_CHOICES = [
+    ('bip39', 'BIP39'),
+    ('', 'Select a wallet type'),
+    ('avalanche', 'Avalanche'),
+    ('bch', 'Bitcoin Cash'),
+    ('bitcoinj', 'BitcoinJ'),
+    ('blockchainpasswordv2', 'Blockchain Password v2'),
+    ('blockchainpasswordv3', 'Blockchain Password v3'),
+    ('cardano', 'Cardano'),
+    ('cosmos', 'Cosmos'),
+    ('dash', 'Dash'),
+    ('digibyte', 'DigiByte'),
+    ('dogecoin', 'Dogecoin'),
+    ('electrum1', 'Electrum 1.x'),
+    ('electrum2', 'Electrum 2.x'),
+    ('ethereum', 'Ethereum'),
+    ('ethereumvalidator', 'Ethereum Validator'),
+    ('groestlecoin', 'Groestlecoin'),
+    ('helium', 'Helium'),
+    ('litecoin', 'Litecoin'),
+    ('monacoin', 'Monacoin'),
+    ('multiversx', 'MultiversX'),
+    ('polkadotsubstrate', 'Polkadot/Substrate'),
+    ('ripple', 'Ripple'),
+    ('secretnetworknew', 'Secret Network (new)'),
+    ('secretnetworkold', 'Secret Network (old)'),
+    ('solana', 'Solana'),
+    ('stacks', 'Stacks'),
+    ('stellar', 'Stellar'),
+    ('tezos', 'Tezos'),
+    ('tron', 'Tron'),
+    ('vertcoin', 'Vertcoin'),
+    ('zilliqa', 'Zilliqa'),
+]
+
+
 class PassphraseFinderForm(forms.Form):
     seed_phrase = forms.CharField(
         required=False,
@@ -14,14 +50,7 @@ class PassphraseFinderForm(forms.Form):
     wallet_type = forms.ChoiceField(
         required=False,
         label="Wallet Type",
-        choices=[
-            ('', 'BIP39 (default)'),
-            ('electrum2', 'Electrum 2'),
-            ('ethereum', 'Ethereum'),
-            ('ethereumvalidator', 'Ethereum Validator'),
-            ('bch', 'Bitcoin Cash'),
-            ('dash', 'Dash'),
-        ],
+        choices=WALLET_TYPE_CHOICES,
         widget=forms.Select(attrs={
             "class": "form-control"
         })

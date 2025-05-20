@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tokenlist Editor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; }
+    .container { max-width: 900px; }
+    .tokenlist-box {
+      width: 100%; height: 300px; font-family: monospace;
+    }
+    .token-preview {
+      font-family: monospace; background: #e9ecef; padding: 0.5rem; border-radius: 4px;
+    }
+    .btn-sm { font-size: 0.75rem; }
+
+.wildcard-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 0.75rem 0.5rem;
+  min-width: 80px;
+  margin: 0.25rem;
+  background-color: #fff;
+  text-align: center;
+}
+.wildcard-box button {
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+.wildcard-box .form-text {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+
+.wildcard-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.wildcard-box {
+  flex: 0 0 calc(50% - 1rem);  /* Force 2 per row */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 0.75rem 0.5rem;
+  background-color: #fff;
+  text-align: center;
+}
+
+.wildcard-box button {
+  font-size: 0.85rem;
+  background-color: #cde1fa;
+  margin-bottom: 0.25rem;
+}
+.wildcard-box .form-text {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+</style>
+</head>
+<body>
+<div class="container py-4">
+  <h2 class="mb-4 text-center">🧾 Tokenlist Editor</h2>
+  <label for="tokenlistPreview" class="form-label fw-bold">Current Tokenlist:</label>
+  <textarea id="tokenlistPreview" class="form-control tokenlist-box mb-4"></textarea>
+  <ul class="nav nav-tabs" id="tokenTabs"></ul>
+  <div class="tab-content" id="tokenTabContent"></div>
+  <div class="d-flex justify-content-end gap-2 mt-5">
+    <button class="btn btn-primary" onclick="downloadTokenlist()">Save Tokenlist</button>
+    <button class="btn btn-outline-secondary" onclick="goToDashboard()">Dashboard</button>
+  </div>
+</div>
+<script>
+const wildcardGroups = {
+  "Digits": {
+    "%d": "Single digit",
+    "%2d": "Exactly 2 digits",
+    "%1,3d": "1 to 3 digits",
+    "%0,2d": "0 to 2 digits (optional)"
+  },
+  "Letters": {
+    "%a": "Single lowercase letter",
+    "%1,3a": "1 to 3 lowercase letters",
+    "%A": "Single uppercase letter"
+  },
+  "Digits/Letters": {
+    "%n": "Single digit or lowercase letter",
+    "%N": "Single digit or uppercase letter",
+    "%ia": "Case-insensitive ASCII letter",
+    "%in": "Case-insensitive digit or letter",
+    "%1,2in": "1–2 case-insensitive chars",
+    "%[chars]": "Any of specified chars",
+    "%1,3[chars]": "1–3 of specified chars",
+    "%[0-9a-f]": "1 hex character",
+    "%2i[0-9a-f]": "2 hex (case-insensitive)"
+  },
+  "Spaces": {
+    "%s": "Space",
+    "%l": "Line feed",
+    "%r": "Carriage return",
+    "%R": "Line feed or carriage return",
+    "%t": "Tab",
+    "%T": "Space or tab",
+    "%w": "Whitespace (space/lf/cr)",
+    "%W": "Whitespace incl. tab"
+  },
+  "Symbols": {
+    "%y": "ASCII symbol",
+    "%Y": "Digit or symbol",
+    "%p": "Letter, digit, or symbol",
+    "%P": "All printable incl. whitespace",
+    "%q": "ASCII + space",
+    "%%": "Literal %",
+    "%^": "Literal ^",
+    "%S": "Literal $"
+  },
+  "Encoding": {
+    "%H": "Hex character (0-9, A-F)",
+    "%B": "Bitcoin Base58 character",
+    "%U": "Unicode character"
+  }
+};
+
+let tokenCards = [];
+
+function insertWildcard(text, index) {
+  const input = document.getElementById(`token-input-${index}`);
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  input.value = input.value.substring(0, start) + text + input.value.substring(end);
+  input.focus();
+  input.setSelectionRange(start + text.length, start + text.length);
+  updatePreview(index);
+}
+
+function addTokenCard(data = "") {
+  const index = tokenCards.length;
+  tokenCards.push({ index });
+  const tabId = `token-tab-${index}`;
+  const paneId = `token-pane-${index}`;
+  document.getElementById("tokenTabs").insertAdjacentHTML("beforeend",
+    `<li class="nav-item"><button class="nav-link ${index === 0 ? "active" : ""}" id="${tabId}" data-bs-toggle="tab" data-bs-target="#${paneId}" type="button">Token ${index + 1}</button></li>`);
+
+  let wildcardTabs = '<ul class="nav nav-pills mb-3" role="tablist">';
+  let tabPanes = '<div class="tab-content">';
+  let first = true;
+  for (const group in wildcardGroups) {
+    const id = `${group.replace(/\W+/g, '').toLowerCase()}-${index}`;
+    wildcardTabs += `<li class="nav-item" role="presentation">
+      <button class="nav-link ${first ? 'active' : ''}" data-bs-toggle="pill" data-bs-target="#${id}" type="button">${group}</button>
+    </li>`;
+    let buttons = "";
+    for (const code in wildcardGroups[group]) {
+      const desc = wildcardGroups[group][code];
+      buttons += `<div class="wildcard-box"><button class="btn btn-outline-dark btn-sm" onclick="insertWildcard('${code}', ${index})">${code}</button><div class="form-text">${desc}</div></div>`;
+    }
+    tabPanes += `<div class="tab-pane fade ${first ? 'show active' : ''}" id="${id}">
+      <div class="wildcard-grid">${buttons}</div>
+    </div>`;
+    first = false;
+  }
+  wildcardTabs += "</ul>";
+  tabPanes += "</div>";
+
+  document.getElementById("tokenTabContent").insertAdjacentHTML("beforeend",
+    `<div class="tab-pane ${index === 0 ? "show active" : ""}" id="${paneId}">
+      <div class="card"><div class="card-body">
+        <label class="form-label">Token:</label>
+        <input type="text" class="form-control mb-2" id="token-input-${index}" value="${data}" oninput="updatePreview(${index})">
+        <div class="token-preview mb-3" id="token-preview-${index}">${data}</div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Positional Settings:</label>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="include-${index}" onchange="updatePreview(${index})">
+            <label class="form-check-label">Include this token in every password (+ token)</label>
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="first-${index}" onchange="updatePreview(${index})">
+            <label class="form-check-label">Must be first (^token)</label>
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="last-${index}" onchange="updatePreview(${index})">
+            <label class="form-check-label">Must be last (token$)</label>
+          </div>
+          <input type="text" class="form-control mb-2" id="position-${index}" placeholder="Exact position (e.g. 2)" oninput="updatePreview(${index})">
+          <input type="text" class="form-control mb-2" id="range-${index}" placeholder="Position range (e.g. 3,7)" oninput="updatePreview(${index})">
+          <input type="text" class="form-control mb-3" id="positions-${index}" placeholder="Allowed positions (e.g. 2,3,6)" oninput="updatePreview(${index})">
+        </div>
+
+        <label class="form-label fw-bold">Wildcard Toolbox:</label>
+        ${wildcardTabs}${tabPanes}
+        <div class="d-flex flex-wrap gap-2 justify-content-start mt-4">
+          <button class="btn btn-secondary" onclick="saveToken(${index})">Save Token</button>
+          <button class="btn btn-secondary" onclick="addTokenCard()">Next Token</button>
+          <button class="btn btn-secondary" onclick="duplicateToken(${index})">Duplicate Token</button>
+          <button class="btn btn-secondary" onclick="deleteToken(${index})">Delete Token</button>
+        </div>
+      </div></div>
+    </div>`);
+}
+
+function updatePreview(index) {
+  let token = document.getElementById(`token-input-${index}`).value.trim();
+  if (document.getElementById(`include-${index}`)?.checked) token = `+ ${token}`;
+  if (document.getElementById(`position-${index}`)?.value) token = `^${document.getElementById(`position-${index}`).value}^${token}`;
+  if (document.getElementById(`range-${index}`)?.value) token = `^${document.getElementById(`range-${index}`).value}^${token}`;
+  if (document.getElementById(`first-${index}`)?.checked) token = `^${token}`;
+  if (document.getElementById(`last-${index}`)?.checked) token = `${token}$`;
+  if (document.getElementById(`positions-${index}`)?.value) {
+    const parts = document.getElementById(`positions-${index}`).value.split(",").map(p => `^${p.trim()}^${token}`);
+    token = parts.join(" ");
+  }
+  document.getElementById(`token-preview-${index}`).innerText = token;
+}
+
+function saveToken(index) {
+  const lines = document.getElementById("tokenlistPreview").value.split("\n");
+  const val = document.getElementById(`token-preview-${index}`).innerText;
+  while (lines.length <= index) lines.push("");
+  lines[index] = val;
+  document.getElementById("tokenlistPreview").value = lines.join("\n");
+}
+
+function downloadTokenlist() {
+  const content = document.getElementById("tokenlistPreview").value;
+  const blob = new Blob([content], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "tokenlist.txt";
+  link.click();
+}
+
+function goToDashboard() {
+  window.location.href = "/";
+}
+
+addTokenCard();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<script>
+function duplicateToken(index) {
+  const input = document.getElementById(`token-input-${index}`).value;
+  addTokenCard(input);
+  const newIndex = tokenCards.length - 1;
+  document.getElementById(`token-input-${newIndex}`).value = input;
+  document.getElementById(`include-${newIndex}`).checked = document.getElementById(`include-${index}`).checked;
+  document.getElementById(`position-${newIndex}`).value = document.getElementById(`position-${index}`).value;
+  document.getElementById(`range-${newIndex}`).value = document.getElementById(`range-${index}`).value;
+  document.getElementById(`first-${newIndex}`).checked = document.getElementById(`first-${index}`).checked;
+  document.getElementById(`last-${newIndex}`).checked = document.getElementById(`last-${index}`).checked;
+  document.getElementById(`positions-${newIndex}`).value = document.getElementById(`positions-${index}`).value;
+  updatePreview(newIndex);
+  new bootstrap.Tab(document.getElementById(`token-tab-${newIndex}`)).show();
+}
+function deleteToken(index) {
+  document.getElementById(`token-tab-${index}`)?.remove();
+  document.getElementById(`token-pane-${index}`)?.remove();
+  const lines = document.getElementById("tokenlistPreview").value.split("\n");
+  if (lines.length > index) {
+    lines.splice(index, 1);
+    document.getElementById("tokenlistPreview").value = lines.join("\n");
+  }
+}
+</script>

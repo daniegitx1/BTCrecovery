@@ -8,6 +8,24 @@ from scanner.arg_labels import ARG_LABELS
 BASE_DIR = os.path.abspath("C:/Users/danie/PycharmProjects/btcrecover")
 RUNTIME_DIR = os.path.join(BASE_DIR, "runtime")
 
+def parse_password_finder_output():
+    result = _parse_common_output(
+        log_file="descramble_output.log",
+        toolset="Digital_Distillery|BTCrecovery|password_finder|btcrecover.py",
+        arg_labels=ARG_LABELS
+    )
+
+    # Write Recovered_Key to recovery_output.txt if it exists
+    if result.get("Recovered_Key"):
+        try:
+            with open(os.path.join(RUNTIME_DIR, "recovery_output.txt"), 'w', encoding='utf-8') as f:
+                f.write(result["Recovered_Key"] + '\n')
+        except Exception as e:
+            result["Write_Error"] = f"Could not write output: {e}"
+
+    return result
+
+
 def parse_seed_repair_output():
     result = {}
     log_path = os.path.join(RUNTIME_DIR, "seedrepair_output.log")
@@ -81,6 +99,7 @@ def parse_passphrase_output():
 
     return result
 
+
 def _parse_common_output(log_file, toolset, arg_labels):
     result = {}
     log_path = os.path.join(RUNTIME_DIR, log_file)
@@ -93,7 +112,6 @@ def _parse_common_output(log_file, toolset, arg_labels):
         result["Recovery_Log"] = f.read()
 
     result["Toolset"] = toolset
-
     _parse_timestamps_from_file(result)
 
     if os.path.exists(debug_path):
@@ -107,6 +125,7 @@ def _parse_common_output(log_file, toolset, arg_labels):
     _parse_command_line_args(result, arg_labels)
 
     log = result.get("Recovery_Log", "")
+
     if m := re.search(r"Seed found:\s*(.+)", log):
         result["Recovered_Seed"] = m.group(1).strip()
 
